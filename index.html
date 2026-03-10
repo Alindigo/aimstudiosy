@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AIM Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Geist:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+:root{
+  --bg:#0a0a09;--bg2:#101010;--border:rgba(255,255,255,0.07);
+  --border-hi:rgba(255,255,255,0.11);--text:#ececf0;--muted:#6b6b78;
+  --muted2:#4a4a55;--accent:#c8f53c;--red:rgba(239,68,68,.9);
+  --card-bg:#0e0e0f;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.11);
+  --sub:#888880;--dim:#444440;--acc-t:rgba(200,245,60,.12);
+}
+body{font-family:'Geist',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:9999}
+
+/* BG MESH */
+.bg-mesh{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.mesh-blob-1{position:absolute;top:-25vh;left:50%;transform:translateX(-50%);width:min(900px,120vw);height:700px;background:radial-gradient(ellipse at 50% 40%,rgba(200,245,60,.11) 0%,rgba(200,245,60,.04) 45%,transparent 70%);border-radius:50%;animation:meshPulse1 9s ease-in-out infinite alternate}
+.mesh-blob-2{position:absolute;top:8vh;right:-10vw;width:min(550px,80vw);height:600px;background:radial-gradient(ellipse,rgba(200,245,60,.04) 0%,transparent 65%);border-radius:50%;animation:meshPulse2 13s 3s ease-in-out infinite alternate-reverse}
+@keyframes meshPulse1{from{opacity:1;transform:translateX(-50%) scale(1)}to{opacity:.6;transform:translateX(-50%) scale(1.07)}}
+@keyframes meshPulse2{from{opacity:1;transform:scale(1)}to{opacity:.55;transform:scale(1.08)}}
+.grid-lines{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse 85% 55% at 50% 0%,black 0%,transparent 80%);opacity:.4}
+
+/* LANGUAGE SWITCHER */
+.lang-switcher{
+  display:flex;align-items:center;gap:2px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--line2);border-radius:10px;padding:3px;
+}
+.lang-btn{
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;padding:5px 10px;border-radius:7px;border:none;
+  background:transparent;color:var(--dim);cursor:pointer;
+  transition:background .2s,color .2s;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.lang-btn.active{background:var(--accent);color:var(--bg);font-weight:600}
+.lang-btn:hover:not(.active){background:rgba(255,255,255,.06);color:var(--muted)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 16px}
+.nav-shell{max-width:1120px;margin:12px auto 0;padding:10px 16px 10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:14px;border:1px solid transparent;transition:background .4s,border-color .4s,backdrop-filter .4s,max-width .45s cubic-bezier(.4,0,.2,1)}
+.nav-shell.scrolled{background:rgba(10,10,9,.88);border-color:var(--border-hi);backdrop-filter:blur(22px) saturate(180%);max-width:900px}
+.logo{display:flex;align-items:center;text-decoration:none;font-weight:800;font-size:20px;color:var(--text);letter-spacing:-1px;flex-shrink:0}
+.nav-links{display:flex;gap:24px;list-style:none}
+.nav-links a{font-size:13px;font-weight:400;color:var(--muted);text-decoration:none;letter-spacing:.01em;transition:color .2s;white-space:nowrap}
+.nav-links a:hover{color:var(--text)}
+.nav-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+
+/* MOBILE MENU TOGGLE */
+.nav-menu-btn{
+  display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--line2);
+  background:rgba(255,255,255,.03);align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background .2s,border-color .2s;
+}
+.nav-menu-btn:hover{background:rgba(255,255,255,.07);border-color:var(--border-hi)}
+.nav-menu-btn svg{width:16px;height:16px;stroke:var(--muted);stroke-width:2;fill:none;stroke-linecap:round;transition:opacity .2s}
+.nav-menu-btn.open .icon-open{opacity:0}
+.nav-menu-btn.open .icon-close{opacity:1!important}
+.icon-close{opacity:0;position:absolute}
+
+/* MOBILE DRAWER */
+.mobile-drawer{
+  position:fixed;top:0;left:0;right:0;bottom:0;z-index:90;
+  background:rgba(10,10,9,.97);backdrop-filter:blur(20px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  opacity:0;pointer-events:none;transform:translateY(-12px);
+  transition:opacity .3s cubic-bezier(.16,1,.3,1),transform .3s cubic-bezier(.16,1,.3,1);
+  padding:80px 24px 40px;
+}
+.mobile-drawer.open{opacity:1;pointer-events:all;transform:translateY(0)}
+.mobile-nav-link{
+  font-family:'Fraunces',serif;font-size:clamp(1.5rem,7vw,2.2rem);font-weight:300;
+  color:var(--muted);text-decoration:none;padding:12px 24px;border-radius:12px;
+  transition:color .2s,background .2s;letter-spacing:-.02em;width:100%;text-align:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.mobile-nav-link:hover,.mobile-nav-link:active{color:var(--text);background:rgba(255,255,255,.04)}
+.mobile-drawer-bottom{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:24px;width:100%}
+.mobile-drawer .lang-switcher{justify-content:center}
+
+/* FLOW BTN — FlowButton style */
+.flow-btn{
+  position:relative;display:inline-flex;align-items:center;
+  overflow:hidden;border-radius:100px;
+  border:1.5px solid rgba(255,255,255,.18);
+  background:transparent;padding:0 28px;height:44px;
+  font-family:'Geist',sans-serif;font-size:13px;font-weight:600;
+  color:var(--text);cursor:pointer;outline:none;
+  letter-spacing:.01em;white-space:nowrap;
+  transition:border-color .6s cubic-bezier(.23,1,.32,1),color .6s cubic-bezier(.23,1,.32,1),border-radius .6s cubic-bezier(.23,1,.32,1);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.flow-btn:hover{border-color:transparent;color:var(--bg);border-radius:12px}
+.flow-btn:active{transform:scale(.95)}
+.flow-btn .fb-arr-l{position:absolute;left:-20%;width:14px;height:14px;stroke:var(--text);stroke-width:2;fill:none;z-index:9;transition:left .8s cubic-bezier(.34,1.56,.64,1),stroke .6s}
+.flow-btn:hover .fb-arr-l{left:14px;stroke:var(--bg)}
+.flow-btn .fb-text{position:relative;z-index:1;transform:translateX(-4px);transition:transform .8s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.flow-btn:hover .fb-text{transform:translateX(10px)}
+.flow-btn .fb-circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:0;height:0;border-radius:50%;opacity:0;z-index:0;transition:width .8s cubic-bezier(.19,1,.22,1),height .8s cubic-bezier(.19,1,.22,1),opacity .3s}
+.flow-btn:hover .fb-circle{width:280px;height:280px;opacity:1}
+.flow-btn .fb-arr-r{position:absolute;right:14px;width:14px;height:14px;stroke:var(--text);stroke-width:2;fill:none;z-index:9;transition:right .8s cubic-bezier(.34,1.56,.64,1),stroke .6s}
+.flow-btn:hover .fb-arr-r{right:-20%;stroke:var(--bg)}
+/* PRIMARY — accent circle fill */
+.flow-btn.fb-primary{border-color:rgba(200,245,60,.45)}
+.flow-btn.fb-primary .fb-circle{background:var(--accent)}
+.flow-btn.fb-primary:hover{color:var(--bg)}
+.flow-btn.fb-primary .fb-arr-l,.flow-btn.fb-primary .fb-arr-r{stroke:var(--accent)}
+.flow-btn.fb-primary:hover .fb-arr-l,.flow-btn.fb-primary:hover .fb-arr-r{stroke:var(--bg)}
+/* gradient wrap for hero primary */
+.fb-wrap{padding:1.5px;border-radius:100px;background:linear-gradient(135deg,rgba(200,245,60,.7),rgba(200,245,60,.2));box-shadow:0 0 24px rgba(200,245,60,.15);display:inline-block;transition:border-radius .6s cubic-bezier(.23,1,.32,1)}
+.fb-wrap.hovered{border-radius:13.5px}
+.fb-wrap .flow-btn{border:none}
+/* SECONDARY — white outline */
+.flow-btn.fb-secondary{border-color:rgba(255,255,255,.15)}
+.flow-btn.fb-secondary .fb-circle{background:rgba(255,255,255,.12)}
+.flow-btn.fb-secondary:hover{color:var(--text);border-radius:12px}
+.flow-btn.fb-secondary .fb-arr-l,.flow-btn.fb-secondary .fb-arr-r{stroke:var(--muted)}
+.flow-btn.fb-secondary:hover .fb-arr-l,.flow-btn.fb-secondary:hover .fb-arr-r{stroke:var(--text)}
+/* small nav variant */
+.flow-btn.fb-sm{height:36px;font-size:12px;padding:0 20px}
+/* cases cta link-button */
+.cases-hero-btn{
+  position:relative;display:inline-flex;align-items:center;
+  overflow:hidden;border-radius:100px;
+  border:1.5px solid rgba(200,245,60,.45);
+  background:transparent;padding:0 28px;height:44px;
+  font-family:'Geist',sans-serif;font-size:13px;font-weight:600;
+  color:var(--accent);cursor:pointer;outline:none;letter-spacing:.01em;
+  white-space:nowrap;text-decoration:none;
+  transition:border-color .6s cubic-bezier(.23,1,.32,1),color .6s cubic-bezier(.23,1,.32,1),border-radius .6s cubic-bezier(.23,1,.32,1);
+  -webkit-tap-highlight-color:transparent;
+}
+.cases-hero-btn .chb-circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:0;height:0;border-radius:50%;background:var(--accent);opacity:0;z-index:0;transition:width .8s cubic-bezier(.19,1,.22,1),height .8s cubic-bezier(.19,1,.22,1),opacity .3s}
+.cases-hero-btn .chb-arr-l{position:absolute;left:-20%;width:14px;height:14px;stroke:var(--accent);stroke-width:2;fill:none;z-index:9;transition:left .8s cubic-bezier(.34,1.56,.64,1),stroke .6s}
+.cases-hero-btn .chb-text{position:relative;z-index:1;transform:translateX(-4px);transition:transform .8s cubic-bezier(.34,1.56,.64,1)}
+.cases-hero-btn .chb-arr-r{position:absolute;right:14px;width:14px;height:14px;stroke:var(--accent);stroke-width:2;fill:none;z-index:9;transition:right .8s cubic-bezier(.34,1.56,.64,1),stroke .6s}
+.cases-hero-btn:hover{border-color:transparent;color:var(--bg);border-radius:12px}
+.cases-hero-btn:hover .chb-circle{width:280px;height:280px;opacity:1}
+.cases-hero-btn:hover .chb-arr-l{left:14px;stroke:var(--bg)}
+.cases-hero-btn:hover .chb-text{transform:translateX(10px)}
+.cases-hero-btn:hover .chb-arr-r{right:-20%;stroke:var(--bg)}
+.cases-hero-btn:active{transform:scale(.95)}
+
+/* HERO */
+.hero{position:relative;z-index:1;padding:148px 20px 140px;text-align:center}
+.hero-fade{position:absolute;left:0;right:0;bottom:0;height:75%;background:linear-gradient(to bottom,transparent 0%,rgba(10,10,9,.6) 50%,var(--bg) 100%);pointer-events:none;z-index:2}
+.hero-inner{position:relative;z-index:3;max-width:800px;margin:0 auto}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(200,245,60,.04);border:1px solid rgba(200,245,60,.18);border-radius:9999px;padding:5px 6px 5px 12px;font-size:12px;color:var(--muted);text-decoration:none;margin-bottom:36px;transition:background .2s,border-color .2s;opacity:0;animation:riseIn .7s .05s cubic-bezier(.16,1,.3,1) forwards}
+.badge:hover{background:rgba(200,245,60,.08);border-color:rgba(200,245,60,.35)}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);flex-shrink:0}
+.badge-text{color:var(--text)}
+.badge-divider{width:1px;height:14px;background:rgba(200,245,60,.2)}
+.badge-arrow{width:22px;height:22px;border-radius:50%;background:rgba(200,245,60,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .3s}
+.badge-arrow svg{width:11px;height:11px;stroke:var(--accent);stroke-width:2;fill:none}
+.badge:hover .badge-arrow{background:rgba(200,245,60,.18);transform:translateX(2px)}
+h1{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(2.6rem,7vw,5.6rem);line-height:1.05;letter-spacing:-0.03em;color:var(--text);margin-bottom:24px;opacity:0;animation:riseIn .85s .15s cubic-bezier(.16,1,.3,1) forwards}
+h1 em{font-style:italic;font-weight:300;color:var(--accent);-webkit-text-fill-color:var(--accent);text-shadow:0 0 60px rgba(200,245,60,.3)}
+.hero-sub{font-size:clamp(14px,3.5vw,16.5px);font-weight:300;line-height:1.72;color:var(--muted);max-width:470px;margin:0 auto 44px;opacity:0;animation:riseIn .85s .25s cubic-bezier(.16,1,.3,1) forwards;padding:0 4px}
+.cta-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:48px;opacity:0;animation:riseIn .85s .35s cubic-bezier(.16,1,.3,1) forwards}
+
+/* SCROLL SECTION */
+.scroll-section{position:relative;z-index:1;height:180vh;margin-top:-120px}
+.scroll-sticky-wrap{
+  position:sticky;top:0;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 16px;overflow:hidden;
+}
+.scroll-perspective{
+  perspective:1200px;
+  perspective-origin:50% 40%;
+  width:100%;max-width:1040px;
+}
+.scroll-card-wrap{
+  width:100%;
+  transform-origin:50% 0%;
+  will-change:transform;
+  transform:rotateX(22deg) scale(1.06) translateY(0px);
+}
+.screenshot-frame{
+  position:relative;background:var(--bg2);
+  border:3px solid #5a5a5a;border-radius:20px;padding:2px 2px 0;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.04),
+    0 9px 20px rgba(0,0,0,.55),
+    0 37px 37px rgba(0,0,0,.45),
+    0 84px 50px rgba(0,0,0,.28),
+    0 149px 60px rgba(0,0,0,.10),
+    0 4px 40px rgba(200,245,60,.07);
+}
+.frame-topbar{display:flex;align-items:center;gap:5px;padding:7px 12px 8px}
+.frame-dot{width:8px;height:8px;border-radius:50%}
+.frame-dot:nth-child(1){background:#ff5f57}
+.frame-dot:nth-child(2){background:#febc2e}
+.frame-dot:nth-child(3){background:#28c840}
+.frame-inner{border-radius:0 0 16px 16px;overflow:hidden;background:#111}
+.screenshot-frame img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;object-position:top center}
+.scroll-card-fade{
+  position:absolute;bottom:0;left:0;right:0;height:45%;
+  background:linear-gradient(to bottom,transparent,var(--bg));
+  pointer-events:none;z-index:2;border-radius:0 0 18px 18px;
+}
+.scroll-glow{
+  position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);
+  width:60%;height:120px;
+  background:radial-gradient(ellipse,rgba(200,245,60,.22) 0%,transparent 70%);
+  filter:blur(36px);pointer-events:none;z-index:0;
+}
+
+/* LOGO CLOUD */
+.logos-section{position:relative;z-index:1;padding:48px 0 72px;text-align:center}
+.logos-heading{font-family:'Geist',sans-serif;font-size:clamp(1.1rem,2.5vw,1.6rem);font-weight:500;letter-spacing:-.02em;line-height:1.4;margin-bottom:20px;padding:0 20px}
+.logos-heading .muted{color:var(--muted)}
+.logos-divider{height:1px;max-width:320px;margin:0 auto 20px;background:var(--border-hi);-webkit-mask-image:linear-gradient(to right,transparent,black,transparent);mask-image:linear-gradient(to right,transparent,black,transparent)}
+.logos-divider-full{height:1px;margin:20px 20px 0;background:var(--border-hi);-webkit-mask-image:linear-gradient(to right,transparent,black,transparent);mask-image:linear-gradient(to right,transparent,black,transparent)}
+.logo-cloud-wrap{overflow:hidden;padding:14px 0;-webkit-mask-image:linear-gradient(to right,transparent,black 10%,black 90%,transparent);mask-image:linear-gradient(to right,transparent,black 10%,black 90%,transparent)}
+.logo-slider{display:flex;width:max-content;gap:44px;align-items:center;animation:logoScroll 22s linear infinite;will-change:transform}
+.logo-cloud-wrap:hover .logo-slider{animation-play-state:paused}
+.logo-slider img{height:16px;width:auto;pointer-events:none;user-select:none;filter:brightness(0) invert(1);opacity:.4;transition:opacity .3s;flex-shrink:0}
+.logo-slider img:hover{opacity:.9}
+@keyframes logoScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* SERVICES */
+.services-section{position:relative;z-index:1;padding:80px 20px 64px}
+.services-inner{max-width:1040px;margin:0 auto}
+.section-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:0 2px 20px;border-bottom:1px solid var(--line);margin-bottom:4px;flex-wrap:wrap}
+.section-header-left{display:flex;flex-direction:column;gap:6px}
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 0}
+.svc-card{position:relative;display:block;border-radius:18px;padding:4px;background:var(--card-bg);border:1px solid var(--line);transition:border-color .25s,background .25s;overflow:hidden}
+.svc-card:hover{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.02)}
+.svc-card::after{content:'';position:absolute;inset:0;border-radius:18px;background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%),rgba(200,245,60,.04),transparent 40%);opacity:0;transition:opacity .3s;pointer-events:none}
+.svc-card:hover::after{opacity:1}
+.svc-card-inner{padding:24px 20px 20px}
+.svc-icon{width:38px;height:38px;border-radius:11px;background:rgba(200,245,60,.06);border:1px solid rgba(200,245,60,.14);display:flex;align-items:center;justify-content:center;margin-bottom:16px;transition:background .25s,border-color .25s}
+.svc-card:hover .svc-icon{background:rgba(200,245,60,.12);border-color:rgba(200,245,60,.3)}
+.svc-icon svg{width:17px;height:17px;stroke:var(--accent);stroke-width:1.6;fill:none}
+.svc-title{font-family:'Fraunces',serif;font-weight:300;font-size:1rem;letter-spacing:-.02em;line-height:1.15;color:var(--text);margin-bottom:10px;transition:color .2s}
+.svc-card:hover .svc-title{color:#fff}
+.svc-desc{font-size:12.5px;font-weight:300;line-height:1.75;color:var(--sub)}
+.svc-arrow{display:inline-flex;align-items:center;gap:5px;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);transition:color .25s,gap .25s}
+.svc-arrow svg{width:11px;height:11px;stroke:currentColor;stroke-width:2;fill:none;transition:transform .25s}
+.svc-card:hover .svc-arrow{color:var(--accent);gap:8px}
+.svc-card:hover .svc-arrow svg{transform:translateX(2px)}
+
+/* HOW WE WORK */
+.process-section{position:relative;z-index:1;padding:88px 20px 80px}
+.process-inner{max-width:900px;margin:0 auto}
+.feat-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:0 2px 20px;border-bottom:1px solid var(--line);margin-bottom:32px;flex-wrap:wrap}
+.feat-header-left{display:flex;flex-direction:column;gap:6px}
+.feat-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.feat-title{font-family:'Fraunces',serif;font-weight:200;font-size:clamp(1.4rem,3vw,2rem);letter-spacing:-.03em;line-height:1;color:var(--text)}
+.feat-title em{font-style:italic;color:var(--accent);-webkit-text-fill-color:var(--accent)}
+.feat-sub{font-size:13px;font-weight:300;color:var(--sub);max-width:280px;line-height:1.65}
+.acc-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card-bg)}
+.acc-item{border-bottom:1px solid var(--line)}
+.acc-item:last-child{border-bottom:none}
+.acc-trigger{width:100%;display:flex;align-items:center;gap:12px;padding:16px 20px;background:none;border:none;cursor:pointer;color:var(--text);text-align:left;transition:background .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.acc-trigger:hover{background:rgba(255,255,255,.02)}
+.acc-item.open .acc-trigger{background:var(--acc-t)}
+.acc-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Geist',sans-serif;font-size:10px;font-weight:600;color:var(--dim);background:rgba(255,255,255,.04);border:1px solid var(--line2);flex-shrink:0;transition:all .25s}
+.acc-item.open .acc-dot{background:rgba(200,245,60,.18);color:var(--accent);border-color:rgba(200,245,60,.3)}
+.acc-title-col{flex:1;display:flex;flex-direction:column;gap:2px;pointer-events:none;min-width:0}
+.acc-step-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);transition:color .25s}
+.acc-item.open .acc-step-label{color:var(--accent);opacity:.7}
+.acc-name{font-family:'Fraunces',serif;font-weight:300;font-size:.95rem;letter-spacing:-.02em;line-height:1.1;color:var(--text);transition:color .25s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-dur{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:.08em;white-space:nowrap;transition:color .25s;flex-shrink:0}
+.acc-item.open .acc-dur{color:var(--accent)}
+.acc-chevron{width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .25s,transform .35s cubic-bezier(.4,0,.2,1)}
+.acc-chevron svg{width:10px;height:10px;stroke:var(--dim);stroke-width:2;fill:none;transition:stroke .25s}
+.acc-item.open .acc-chevron{border-color:rgba(200,245,60,.35);transform:rotate(180deg)}
+.acc-item.open .acc-chevron svg{stroke:var(--accent)}
+.acc-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s cubic-bezier(.4,0,.2,1)}
+.acc-item.open .acc-panel{grid-template-rows:1fr}
+.acc-overflow{overflow:hidden}
+.acc-body{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line);position:relative}
+.acc-body::after{content:'';position:absolute;top:12%;bottom:12%;left:50%;width:1px;background:linear-gradient(to bottom,transparent,var(--line) 30%,var(--line) 70%,transparent);pointer-events:none}
+.acc-body-text{padding:24px 24px 24px 20px;display:flex;flex-direction:column;gap:0}
+.acc-desc{font-size:13px;font-weight:300;line-height:1.8;color:var(--sub);margin-bottom:16px}
+.acc-checks{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.acc-check{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:400;color:var(--muted);line-height:1.4}
+.check-icon{width:16px;height:16px;border-radius:50%;background:rgba(200,245,60,.1);border:1px solid rgba(200,245,60,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.check-icon svg{width:8px;height:8px;stroke:var(--accent);stroke-width:2.2;fill:none}
+.acc-body-img{position:relative;overflow:hidden;min-height:180px}
+.acc-body-img::before{content:'';position:absolute;z-index:2;top:0;left:0;bottom:0;width:40px;background:linear-gradient(to right,var(--card-bg),transparent)}
+.acc-body-img::after{content:'';position:absolute;z-index:2;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--card-bg),transparent)}
+.img-main{position:absolute;inset:12px 12px 12px 8px;border-radius:9px;overflow:hidden;border:1px solid var(--line2);box-shadow:0 10px 36px rgba(0,0,0,.5)}
+.img-main img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+@keyframes acc-fu{from{opacity:0;transform:translateY(10px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+.acc-item.open .acc-body-text{animation:acc-fu .4s .05s cubic-bezier(.16,1,.3,1) both}
+.acc-item.open .acc-body-img{animation:acc-fu .45s .12s cubic-bezier(.16,1,.3,1) both}
+.pips-row{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 0}
+.pips{display:flex;gap:4px}
+.pip{height:2px;width:5px;border-radius:1px;background:rgba(255,255,255,.09);transition:width .4s cubic-bezier(.4,0,.2,1),background .4s}
+.pip.on{background:var(--accent);width:20px}
+.hint{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);cursor:pointer;transition:color .25s;border:none;background:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.hint:hover{color:var(--sub)}
+.hint-arrow{width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;transition:border-color .25s,transform .25s}
+.hint:hover .hint-arrow{border-color:rgba(200,245,60,.4);transform:translateX(2px)}
+
+@keyframes riseIn{from{opacity:0;transform:translateY(22px);filter:blur(10px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+/* CASES */
+.cases-section{position:relative;z-index:1;padding:88px 20px 96px}
+.cases-inner{max-width:1100px;margin:0 auto}
+.cases-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:0 2px 20px;border-bottom:1px solid var(--line);margin-bottom:56px;flex-wrap:wrap}
+.cases-header-left{display:flex;flex-direction:column;gap:6px}
+.cases-hero{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.cases-hero-title{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(1.7rem,4vw,3.2rem);letter-spacing:-.03em;line-height:1.1;color:var(--text);margin-bottom:16px}
+.cases-hero-title em{font-style:italic;color:var(--accent)}
+.cases-hero-sub{font-size:13.5px;font-weight:300;color:var(--sub);line-height:1.75;max-width:380px;margin-bottom:28px}
+.img-strip{display:flex;flex-direction:row;gap:8px;align-items:stretch;height:420px;overflow:hidden}
+.img-panel{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;flex-shrink:0;width:52px;transition:width .65s cubic-bezier(.4,0,.2,1);border:1px solid var(--border);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.img-panel.img-active{width:300px}
+.img-panel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .65s ease}
+.img-panel:hover img{transform:scale(1.04)}
+.img-panel-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,rgba(0,0,0,.55) 100%)}
+.img-panel-label{position:absolute;color:#fff;font-size:12px;font-weight:500;white-space:nowrap;letter-spacing:-.01em;transition:all .35s ease;bottom:72px;left:50%;transform:translateX(-50%) rotate(90deg);transform-origin:center center;opacity:.8}
+.img-panel.img-active .img-panel-label{bottom:18px;left:50%;transform:translateX(-50%) rotate(0deg);opacity:1;font-size:13px}
+.img-panel-num{position:absolute;top:12px;left:12px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;color:rgba(255,255,255,.5);opacity:0;transition:opacity .3s ease .2s}
+.img-panel.img-active .img-panel-num{opacity:1}
+
+/* ABOUT */
+.about-section{position:relative;z-index:1;padding:96px 20px 112px;overflow:hidden}
+.about-inner{max-width:1040px;margin:0 auto}
+.about-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:0 2px 20px;border-bottom:1px solid var(--line);margin-bottom:64px;flex-wrap:wrap}
+.about-header-left{display:flex;flex-direction:column;gap:6px}
+.about-grid{display:grid;grid-template-columns:1fr 400px;gap:0 60px;align-items:start}
+.about-manifesto{margin-bottom:48px}
+.about-manifesto-quote{font-family:'Fraunces',serif;font-weight:200;font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.18;letter-spacing:-.03em;color:var(--text);margin-bottom:24px;position:relative;padding-left:24px}
+.about-manifesto-quote::before{content:'';position:absolute;left:0;top:8px;width:3px;height:calc(100% - 16px);background:linear-gradient(to bottom,var(--accent),transparent);border-radius:2px}
+.about-manifesto-quote em{font-style:italic;color:var(--accent);-webkit-text-fill-color:var(--accent)}
+.about-manifesto-body{font-size:13.5px;font-weight:300;line-height:1.82;color:var(--sub);max-width:460px}
+.about-stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card-bg);margin-bottom:40px}
+.about-stat{padding:20px 18px;border-right:1px solid var(--line);position:relative}
+.about-stat:last-child{border-right:none}
+.about-stat-num{font-family:'Fraunces',serif;font-weight:300;font-size:2.2rem;letter-spacing:-.04em;color:var(--text);line-height:1;margin-bottom:5px;display:flex;align-items:baseline;gap:2px}
+.about-stat-num em{font-style:normal;color:var(--accent);-webkit-text-fill-color:var(--accent);font-size:1.5rem}
+.about-stat-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);line-height:1.4}
+.about-values{display:flex;flex-direction:column;gap:0}
+.about-value{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.about-value:last-child{border-bottom:none}
+.about-value-num{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:3px;flex-shrink:0;width:24px}
+.about-value-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;letter-spacing:-.01em}
+.about-value-desc{font-size:12px;font-weight:300;color:var(--sub);line-height:1.6}
+.about-right{position:relative}
+.about-photo-main{width:100%;border-radius:18px;overflow:hidden;border:1px solid var(--border-hi);box-shadow:0 32px 80px rgba(0,0,0,.55);aspect-ratio:3/4;position:relative}
+.about-photo-main img{width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block}
+.about-photo-main-fade{position:absolute;inset-x:0;bottom:0;height:45%;background:linear-gradient(to top,rgba(10,10,9,.85),transparent);pointer-events:none}
+.about-team-row{display:flex;align-items:center;margin-top:40px;padding-left:8px}
+.tooltip-avatar-wrap{position:relative;margin-right:-14px;cursor:pointer;z-index:1}
+.tooltip-avatar-wrap:hover{z-index:50}
+.tooltip-avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid var(--bg);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:block;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.tooltip-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;pointer-events:none}
+.tooltip-avatar-wrap:hover .tooltip-avatar{transform:scale(1.1) translateY(-4px)}
+.tooltip-pop{position:absolute;bottom:calc(100% + 10px);left:50%;background:var(--text);border-radius:10px;padding:7px 12px;display:flex;flex-direction:column;align-items:center;white-space:nowrap;pointer-events:none;z-index:100;box-shadow:0 12px 32px rgba(0,0,0,.5);opacity:0;transform:translateX(-50%) translateY(8px) scale(0.7);transition:opacity .18s cubic-bezier(.16,1,.3,1),transform .22s cubic-bezier(.34,1.56,.64,1);transform-origin:center bottom}
+.tooltip-avatar-wrap:hover .tooltip-pop{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+.tooltip-pop::after{content:'';position:absolute;bottom:-1px;left:30%;width:40%;height:1px;background:linear-gradient(to right,transparent,var(--accent),transparent)}
+.tooltip-pop-name{font-size:12px;font-weight:600;color:var(--bg);line-height:1.2;letter-spacing:-.01em}
+.tooltip-pop-role{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,9,.5);margin-top:1px}
+.reveal-on-scroll{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.reveal-on-scroll.visible{opacity:1;transform:translateY(0)}
+
+/* CONTACT */
+.contact-section{position:relative;z-index:1;padding:96px 20px 112px}
+.contact-inner{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:1fr 1.1fr;gap:0 72px;align-items:start}
+.contact-info{padding-top:8px}
+.contact-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:12px;display:block}
+.contact-title{font-family:'Fraunces',serif;font-weight:200;font-size:clamp(2rem,4vw,3.8rem);letter-spacing:-.04em;line-height:1.05;color:var(--text);margin-bottom:16px}
+.contact-title em{font-style:italic;color:var(--accent);-webkit-text-fill-color:var(--accent)}
+.contact-desc{font-size:13.5px;font-weight:300;line-height:1.8;color:var(--sub);max-width:320px;margin-bottom:40px}
+.contact-details{display:flex;flex-direction:column;gap:0;margin-bottom:40px}
+.contact-detail{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.contact-detail:first-child{border-top:1px solid var(--line)}
+.contact-detail-icon{width:32px;height:32px;border-radius:9px;background:rgba(200,245,60,.06);border:1px solid rgba(200,245,60,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.contact-detail-icon svg{width:14px;height:14px;stroke:var(--accent);stroke-width:1.6;fill:none}
+.contact-detail-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.contact-detail-val{font-size:13px;font-weight:400;color:var(--text);text-decoration:none;transition:color .2s}
+a.contact-detail-val:hover{color:var(--accent)}
+.contact-form-card{background:var(--card-bg);border:1px solid var(--line);border-radius:18px;padding:32px 28px}
+.contact-form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.contact-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.contact-field:last-of-type{margin-bottom:20px}
+.contact-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim)}
+.contact-input,.contact-textarea{font-family:'Geist',sans-serif;font-size:13px;font-weight:300;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:9px;padding:10px 13px;color:var(--text);outline:none;transition:border-color .2s,background .2s;width:100%;-webkit-appearance:none;appearance:none}
+.contact-input::placeholder,.contact-textarea::placeholder{color:var(--muted2)}
+.contact-input:focus,.contact-textarea:focus{border-color:rgba(200,245,60,.35);background:rgba(200,245,60,.02)}
+.contact-textarea{min-height:100px;resize:vertical}
+.contact-submit{
+  width:100%;position:relative;display:inline-flex;align-items:center;justify-content:center;
+  overflow:hidden;border-radius:100px;
+  border:1.5px solid rgba(200,245,60,.45);
+  background:transparent;padding:0 28px;height:48px;
+  font-family:'Geist',sans-serif;font-size:13.5px;font-weight:600;letter-spacing:.01em;
+  color:var(--accent);cursor:pointer;
+  transition:border-color .6s cubic-bezier(.23,1,.32,1),color .6s cubic-bezier(.23,1,.32,1),border-radius .6s cubic-bezier(.23,1,.32,1);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.contact-submit::before{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:0;height:0;border-radius:50%;
+  background:var(--accent);opacity:0;z-index:0;
+  transition:width .8s cubic-bezier(.19,1,.22,1),height .8s cubic-bezier(.19,1,.22,1),opacity .3s;
+}
+.contact-submit span{position:relative;z-index:1}
+.contact-submit:hover{border-color:transparent;color:var(--bg);border-radius:12px}
+.contact-submit:hover::before{width:500px;height:500px;opacity:1}
+.contact-submit:active{transform:scale(.98)}
+
+/* FOOTER */
+.site-footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:44px 20px 36px}
+.footer-inner{max-width:1040px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:40px;flex-wrap:wrap}
+.footer-brand{display:flex;flex-direction:column;gap:10px}
+.footer-logo{text-decoration:none;font-weight:800;font-size:19px;color:var(--text);letter-spacing:-1px;display:block}
+.footer-tagline{font-size:12px;font-weight:300;color:var(--muted2);max-width:200px;line-height:1.6}
+.footer-links{display:flex;gap:40px;flex-wrap:wrap}
+.footer-col{display:flex;flex-direction:column;gap:9px}
+.footer-col-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.footer-col a{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-col a:hover{color:var(--text)}
+.footer-bottom{max-width:1040px;margin:28px auto 0;padding-top:18px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-copy{font-size:11px;font-weight:300;color:var(--muted2)}
+.footer-copy em{font-style:normal;color:var(--dim)}
+.footer-socials{display:flex;gap:8px}
+.footer-social{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:border-color .2s,background .2s;-webkit-tap-highlight-color:transparent}
+.footer-social:hover{border-color:var(--border-hi);background:rgba(255,255,255,.05)}
+.footer-social svg{width:12px;height:12px;stroke:var(--muted);stroke-width:1.8;fill:none}
+
+/* MAP */
+.location-map-wrap{display:flex;flex-direction:column;gap:8px}
+.location-map-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted2)}
+.map-card{position:relative;cursor:pointer;user-select:none;width:210px;height:112px;transition:width .45s cubic-bezier(.34,1.56,.64,1),height .45s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.map-card.expanded{width:300px;height:220px}
+.map-tilt{width:100%;height:100%;perspective:1000px;transition:transform .18s ease}
+.map-card-inner{position:relative;overflow:hidden;border-radius:13px;background:var(--bg2);border:1px solid var(--border);width:100%;height:100%;transform-style:preserve-3d;transition:border-color .2s}
+.map-card:hover .map-card-inner{border-color:var(--border-hi)}
+.map-card-inner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,transparent 50%,rgba(255,255,255,.02) 100%);z-index:1;pointer-events:none}
+.map-bg{position:absolute;inset:0;background:#12130f;opacity:0;transition:opacity .35s ease .05s}
+.map-card.expanded .map-bg{opacity:1}
+.map-svg{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .25s ease .1s}
+.map-card.expanded .map-svg{opacity:1}
+.map-road{fill:none;stroke-linecap:round;stroke:rgba(255,255,255,0.2)}
+.map-road-sec{fill:none;stroke-linecap:round;stroke:rgba(255,255,255,0.08)}
+.map-building{position:absolute;border-radius:3px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.07);opacity:0;transform:scale(.85);transition:opacity .3s ease,transform .3s ease}
+.map-card.expanded .map-building{opacity:1;transform:scale(1)}
+.map-pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%) scale(0);transition:transform .4s cubic-bezier(.34,1.56,.64,1) .28s;z-index:10;filter:drop-shadow(0 0 8px rgba(200,245,60,.55));pointer-events:none}
+.map-card.expanded .map-pin{transform:translate(-50%,-60%) scale(1)}
+.map-grid{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 19px,rgba(255,255,255,.03) 19px,rgba(255,255,255,.03) 20px),repeating-linear-gradient(90deg,transparent,transparent 19px,rgba(255,255,255,.03) 19px,rgba(255,255,255,.03) 20px);transition:opacity .3s ease}
+.map-card.expanded .map-grid{opacity:0}
+.map-content{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:space-between;padding:12px 14px;pointer-events:none}
+.map-top{display:flex;align-items:flex-start;justify-content:space-between}
+.map-icon-wrap{opacity:1;transition:opacity .2s}
+.map-card.expanded .map-icon-wrap{opacity:0}
+.map-status{display:flex;align-items:center;gap:4px;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.05);backdrop-filter:blur(8px);font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.map-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(200,245,60,.7);animation:mapDotPulse 2s infinite}
+@keyframes mapDotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.map-bottom{display:flex;flex-direction:column;gap:3px}
+.map-city{font-size:12px;font-weight:500;color:var(--text);letter-spacing:-.01em;transition:transform .3s ease}
+.map-card:hover .map-city{transform:translateX(3px)}
+.map-coords{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);max-height:0;overflow:hidden;opacity:0;transition:max-height .3s ease,opacity .3s ease}
+.map-card.expanded .map-coords{max-height:20px;opacity:1;transition-delay:.12s}
+.map-underline{height:1px;background:linear-gradient(90deg,rgba(200,245,60,.45) 0%,rgba(200,245,60,.15) 55%,transparent 100%);transform-origin:left;transform:scaleX(.25);transition:transform .4s ease}
+.map-card:hover .map-underline,.map-card.expanded .map-underline{transform:scaleX(1)}
+.map-overlay-fade{position:absolute;bottom:0;left:0;right:0;height:45%;background:linear-gradient(to top,var(--bg2) 0%,transparent 100%);pointer-events:none;z-index:4;opacity:0;transition:opacity .3s ease .2s}
+.map-card.expanded .map-overlay-fade{opacity:1}
+.map-hint{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%) translateY(4px);font-size:9px;color:var(--muted2);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+.map-card:hover:not(.expanded) .map-hint{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* i18n */
+[data-lang]{display:none}
+[data-lang].lang-active{display:inline}
+span[data-lang].lang-active{display:inline}
+div[data-lang].lang-active{display:block}
+
+/* =============================================
+   RESPONSIVE — TABLET (≤900px)
+   ============================================= */
+@media(max-width:900px){
+  .services-grid{grid-template-columns:repeat(2,1fr)}
+  .about-grid{grid-template-columns:1fr}
+  .about-right{margin-top:48px;max-width:400px}
+  .about-section{padding:72px 20px 88px}
+  .cases-hero{grid-template-columns:1fr;gap:36px}
+  .img-strip{height:340px}
+  .img-panel.img-active{width:220px}
+  .cases-section{padding:72px 20px 72px}
+  .contact-inner{grid-template-columns:1fr}
+  .contact-form-card{margin-top:40px}
+  .contact-section{padding:72px 20px 88px}
+  .nav-links{display:none}
+  .nav-menu-btn{display:flex}
+}
+
+/* =============================================
+   RESPONSIVE — MOBILE (≤640px)
+   ============================================= */
+@media(max-width:640px){
+  /* NAV */
+  nav{padding:0 12px}
+  .nav-shell{padding:8px 12px 8px 16px;margin:10px auto 0}
+  .nav-actions .lang-switcher{display:none}
+  .nav-actions .flow-btn{display:none}
+
+  /* HERO */
+  .hero{padding-top:110px;padding-bottom:100px}
+  .hero-sub{font-size:14px}
+  .cta-row{flex-direction:column;align-items:center;gap:10px}
+  .badge{margin-bottom:28px;font-size:11px}
+
+  /* SCROLL SECTION */
+  .scroll-section{height:130vh}
+
+  /* LOGOS */
+  .logos-section{padding:36px 0 56px}
+  .logo-slider img{height:14px}
+
+  /* SERVICES */
+  .services-section{padding:64px 14px 52px}
+  .services-grid{grid-template-columns:1fr}
+  .svc-card-inner{padding:20px 16px 16px}
+  .section-header .feat-sub{display:none}
+
+  /* PROCESS */
+  .process-section{padding:64px 14px 64px}
+  .acc-body{grid-template-columns:1fr}
+  .acc-body::after{display:none}
+  .acc-body-img{display:none}
+  .acc-trigger{padding:14px 16px;gap:10px}
+  .acc-dur{display:none}
+  .feat-header .feat-sub{display:none}
+
+  /* CASES */
+  .cases-section{padding:64px 14px 64px}
+  .cases-header{margin-bottom:36px}
+  .cases-header .feat-sub{display:none}
+  .cases-hero{grid-template-columns:1fr;gap:28px}
+  .img-strip{flex-direction:row;height:160px;gap:6px;overflow:visible}
+  .img-panel{flex:1 1 0!important;width:auto!important;min-width:0!important;flex-shrink:1!important;height:100%;border-radius:10px;cursor:default;transition:none!important}
+  .img-panel.img-active{flex:1 1 0!important;width:auto!important}
+  .img-panel-label{bottom:10px!important;left:50%!important;transform:translateX(-50%) rotate(0deg)!important;font-size:10px!important;opacity:1!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%;text-align:center}
+  .img-panel-num{opacity:0!important}
+  .img-panel:hover img{transform:none}
+
+  /* ABOUT */
+  .about-section{padding:64px 14px 80px}
+  .about-header{margin-bottom:40px}
+  .about-header .feat-sub{display:none}
+  .about-grid{grid-template-columns:1fr}
+  .about-stats{grid-template-columns:1fr 1fr}
+  .about-stat:nth-child(3){border-right:none;border-top:1px solid var(--line);grid-column:span 2}
+  .about-right{margin-top:40px}
+  .about-photo-main{aspect-ratio:4/3}
+  .about-team-row{margin-top:24px}
+  .tooltip-pop{display:none}
+  .about-manifesto-quote{font-size:1.35rem;padding-left:18px}
+
+  /* CONTACT */
+  .contact-section{padding:64px 14px 80px}
+  .contact-inner{grid-template-columns:1fr}
+  .contact-form-card{margin-top:36px;padding:24px 20px}
+  .contact-form-row{grid-template-columns:1fr}
+  .contact-desc{max-width:none}
+  .contact-title{font-size:2.2rem}
+
+  /* FOOTER */
+  .site-footer{padding:36px 14px 28px}
+  .footer-inner{gap:28px}
+  .footer-links{gap:24px}
+  .footer-col{gap:7px}
+  .footer-bottom{flex-direction:column;align-items:flex-start;gap:10px}
+
+  /* MAP */
+  .map-card{width:100%!important;max-width:280px}
+  .map-card.expanded{width:100%!important;max-width:280px;height:200px}
+}
+
+/* =============================================
+   RESPONSIVE — SMALL PHONE (≤380px)
+   ============================================= */
+@media(max-width:380px){
+  h1{font-size:2.2rem}
+  .hero{padding-top:100px}
+  .contact-title{font-size:1.9rem}
+  .cases-hero-title{font-size:1.6rem}
+  .about-manifesto-quote{font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-mesh">
+  <div class="mesh-blob-1"></div>
+  <div class="mesh-blob-2"></div>
+</div>
+<div class="grid-lines"></div>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <a class="mobile-nav-link" href="#services" onclick="closeDrawer()">
+    <span data-lang="en">Services</span><span data-lang="ru">Услуги</span><span data-lang="kz">Қызметтер</span>
+  </a>
+  <a class="mobile-nav-link" href="#process-section" onclick="closeDrawer()">
+    <span data-lang="en">How We Work</span><span data-lang="ru">Как мы работаем</span><span data-lang="kz">Қалай жұмыс</span>
+  </a>
+  <a class="mobile-nav-link" href="#cases" onclick="closeDrawer()">
+    <span data-lang="en">Case Studies</span><span data-lang="ru">Кейсы</span><span data-lang="kz">Кейстер</span>
+  </a>
+  <a class="mobile-nav-link" href="#about-us" onclick="closeDrawer()">
+    <span data-lang="en">About Us</span><span data-lang="ru">О нас</span><span data-lang="kz">Біз туралы</span>
+  </a>
+  <div class="mobile-drawer-bottom">
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-set-lang="en">EN</button>
+      <button class="lang-btn" data-set-lang="ru">RU</button>
+      <button class="lang-btn" data-set-lang="kz">KZ</button>
+    </div>
+    <button class="flow-btn fb-primary" style="width:100%;max-width:260px;justify-content:center" onclick="closeDrawer();setTimeout(()=>document.getElementById('contact').scrollIntoView({behavior:'smooth'}),300)">
+      <span class="fb-circle"></span>
+      <span class="fb-text">
+        <span data-lang="en">Discuss a Project</span>
+        <span data-lang="ru">Обсудить проект</span>
+        <span data-lang="kz">Жобаны талқылау</span>
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-shell" id="navShell">
+    <a class="logo" href="#">AIM Studio</a>
+
+    <ul class="nav-links">
+      <li><a href="#services"><span data-lang="en">Services</span><span data-lang="ru">Услуги</span><span data-lang="kz">Қызметтер</span></a></li>
+      <li><a href="#process-section"><span data-lang="en">How We Work</span><span data-lang="ru">Как мы работаем</span><span data-lang="kz">Жұмыс</span></a></li>
+      <li><a href="#cases"><span data-lang="en">Cases</span><span data-lang="ru">Кейсы</span><span data-lang="kz">Кейстер</span></a></li>
+      <li><a href="#about-us"><span data-lang="en">About</span><span data-lang="ru">О нас</span><span data-lang="kz">Біз туралы</span></a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-set-lang="en">EN</button>
+        <button class="lang-btn" data-set-lang="ru">RU</button>
+        <button class="lang-btn" data-set-lang="kz">KZ</button>
+      </div>
+      <button class="flow-btn fb-secondary fb-sm" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">
+        <svg class="fb-arr-l" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <span class="fb-circle"></span>
+        <span class="fb-text">
+          <span data-lang="en">Get in Touch</span>
+          <span data-lang="ru">Связаться</span>
+          <span data-lang="kz">Байланысу</span>
+        </span>
+        <svg class="fb-arr-r" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <button class="nav-menu-btn" id="menuBtn" aria-label="Menu">
+        <svg class="icon-open" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg class="icon-close" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-fade"></div>
+  <div class="hero-inner">
+    <a href="#" class="badge">
+      <span class="badge-dot"></span>
+      <span class="badge-text">
+        <span data-lang="en">Tailored for your business</span>
+        <span data-lang="ru">Индивидуальный подход</span>
+        <span data-lang="kz">Жеке тәсіл</span>
+      </span>
+      <span class="badge-divider"></span>
+      <span class="badge-arrow"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+    </a>
+
+    <h1>
+      <span data-lang="en">Digital solutions<br><em>for business</em></span>
+      <span data-lang="ru">Цифровые решения<br><em>для бизнеса</em></span>
+      <span data-lang="kz">Бизнеске арналған<br><em>цифрлық шешімдер</em></span>
+    </h1>
+
+    <p class="hero-sub">
+      <span data-lang="en">Full-cycle digital transformation — from idea to a maintainable product. No fluff.</span>
+      <span data-lang="ru">Полный цикл цифровой трансформации — от идеи до поддерживаемого продукта. Без лишнего.</span>
+      <span data-lang="kz">Идеядан дайын өнімге дейін — толық цикл. Артық сөзсіз.</span>
+    </p>
+
+    <div class="cta-row">
+      <div class="fb-wrap" id="heroPrimaryWrap">
+        <button class="flow-btn fb-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">
+          <svg class="fb-arr-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span class="fb-circle"></span>
+          <span class="fb-text">
+            <span data-lang="en">Discuss a Project</span>
+            <span data-lang="ru">Обсудить проект</span>
+            <span data-lang="kz">Жобаны талқылау</span>
+          </span>
+          <svg class="fb-arr-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCROLL CARD -->
+<div class="scroll-section" id="scrollSection">
+  <div class="scroll-sticky-wrap">
+    <div class="scroll-perspective">
+      <div class="scroll-card-wrap" id="scrollCard">
+        <div class="screenshot-frame">
+          <div class="frame-topbar">
+            <div class="frame-dot"></div><div class="frame-dot"></div><div class="frame-dot"></div>
+          </div>
+          <div class="frame-inner">
+            <img src="https://i.pinimg.com/1200x/7e/98/e6/7e98e648cd2b6ee9aaab14f4d8c24e15.jpg" alt="Dashboard preview" loading="lazy"/>
+          </div>
+          <div class="scroll-card-fade"></div>
+        </div>
+        <div class="scroll-glow"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGO CLOUD -->
+<section class="logos-section">
+  <h2 class="logos-heading">
+    <span class="muted">
+      <span data-lang="en">Powered by</span>
+      <span data-lang="ru">Мы используем</span>
+      <span data-lang="kz">Қолданатын технологиялар</span>
+    </span>
+  </h2>
+  <div class="logos-divider"></div>
+  <div class="logo-cloud-wrap">
+    <div class="logo-slider">
+      <img src="https://svgl.app/library/nvidia-wordmark-light.svg" alt="Nvidia">
+      <img src="https://svgl.app/library/supabase_wordmark_light.svg" alt="Supabase">
+      <img src="https://svgl.app/library/openai_wordmark_light.svg" alt="OpenAI">
+      <img src="https://svgl.app/library/turso-wordmark-light.svg" alt="Turso">
+      <img src="https://svgl.app/library/vercel_wordmark.svg" alt="Vercel">
+      <img src="https://svgl.app/library/github_wordmark_light.svg" alt="GitHub">
+      <img src="https://svgl.app/library/claude-ai-wordmark-icon_light.svg" alt="Claude AI">
+      <img src="https://svgl.app/library/clerk-wordmark-light.svg" alt="Clerk">
+      <img src="https://svgl.app/library/nvidia-wordmark-light.svg" alt="Nvidia">
+      <img src="https://svgl.app/library/supabase_wordmark_light.svg" alt="Supabase">
+      <img src="https://svgl.app/library/openai_wordmark_light.svg" alt="OpenAI">
+      <img src="https://svgl.app/library/turso-wordmark-light.svg" alt="Turso">
+      <img src="https://svgl.app/library/vercel_wordmark.svg" alt="Vercel">
+      <img src="https://svgl.app/library/github_wordmark_light.svg" alt="GitHub">
+      <img src="https://svgl.app/library/claude-ai-wordmark-icon_light.svg" alt="Claude AI">
+      <img src="https://svgl.app/library/clerk-wordmark-light.svg" alt="Clerk">
+    </div>
+  </div>
+  <div class="logos-divider-full"></div>
+</section>
+
+<!-- SERVICES -->
+<section class="services-section" id="services">
+  <div class="services-inner">
+    <div class="section-header">
+      <div class="section-header-left">
+        <span class="feat-eyebrow">
+          <span data-lang="en">What We Do</span>
+          <span data-lang="ru">Что мы делаем</span>
+          <span data-lang="kz">Біз не жасаймыз</span>
+        </span>
+        <h2 class="feat-title">
+          <span data-lang="en">Our <em>Services</em></span>
+          <span data-lang="ru">Наши <em>услуги</em></span>
+          <span data-lang="kz">Біздің <em>қызметтер</em></span>
+        </h2>
+      </div>
+      <p class="feat-sub">
+        <span data-lang="en">Full-cycle digital product creation — from concept to launch.</span>
+        <span data-lang="ru">Полный цикл создания цифровых продуктов — от идеи до запуска.</span>
+        <span data-lang="kz">Идеядан іске қосуға дейін — толық цикл.</span>
+      </p>
+    </div>
+
+    <div class="services-grid">
+      <div class="svc-card"><div class="svc-card-inner">
+        <div class="svc-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+        <h3 class="svc-title"><span data-lang="en">Web Development</span><span data-lang="ru">Веб-разработка</span><span data-lang="kz">Веб-әзірлеу</span></h3>
+        <p class="svc-desc"><span data-lang="en">Fast, scalable websites and web apps on a modern stack. From landing pages to full SaaS platforms.</span><span data-lang="ru">Создаём быстрые, масштабируемые сайты и веб-приложения на современном стеке. От лендинга до SaaS-платформы.</span><span data-lang="kz">Жылдам, икемді сайттар мен веб-қосымшалар. Лендингтен SaaS платформасына дейін.</span></p>
+        <span class="svc-arrow"><span data-lang="en">Explore</span><span data-lang="ru">Подробнее</span><span data-lang="kz">Толығырақ</span><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div></div>
+
+      <div class="svc-card"><div class="svc-card-inner">
+        <div class="svc-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3 class="svc-title"><span data-lang="en">UI/UX Design</span><span data-lang="ru">UI/UX Дизайн</span><span data-lang="kz">UI/UX Дизайн</span></h3>
+        <p class="svc-desc"><span data-lang="en">Interfaces that speak to users. Prototypes, design systems, and brand identity.</span><span data-lang="ru">Проектируем интерфейсы, которые говорят с пользователями. Прототипы, дизайн-системы, фирменный стиль.</span><span data-lang="kz">Пайдаланушылармен сөйлесетін интерфейстер. Прототиптер, дизайн жүйелері, бренд стилі.</span></p>
+        <span class="svc-arrow"><span data-lang="en">Explore</span><span data-lang="ru">Подробнее</span><span data-lang="kz">Толығырақ</span><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div></div>
+
+      <div class="svc-card"><div class="svc-card-inner">
+        <div class="svc-icon"><svg viewBox="0 0 24 24"><path d="M12 18.5a6.5 6.5 0 100-13 6.5 6.5 0 000 13z"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke-linecap="round"/></svg></div>
+        <h3 class="svc-title"><span data-lang="en">Mobile Apps</span><span data-lang="ru">Мобильные приложения</span><span data-lang="kz">Мобильді қосымшалар</span></h3>
+        <p class="svc-desc"><span data-lang="en">Native and cross-platform apps for iOS and Android with exceptional UX.</span><span data-lang="ru">Разрабатываем нативные и кросс-платформенные приложения для iOS и Android с отличным UX.</span><span data-lang="kz">iOS және Android үшін нативті және кросс-платформалы қосымшалар.</span></p>
+        <span class="svc-arrow"><span data-lang="en">Explore</span><span data-lang="ru">Подробнее</span><span data-lang="kz">Толығырақ</span><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div></div>
+
+      <div class="svc-card"><div class="svc-card-inner">
+        <div class="svc-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3 class="svc-title"><span data-lang="en">Brand & Identity</span><span data-lang="ru">Бренд и айдентика</span><span data-lang="kz">Бренд және айдентика</span></h3>
+        <p class="svc-desc"><span data-lang="en">Logo, color system, typography, brand guidelines. Memorable from first glance.</span><span data-lang="ru">Создаём визуальный язык бренда: логотип, цвета, типографика, гайдлайны.</span><span data-lang="kz">Логотип, түс жүйесі, типография, брендбук. Бірінші көзқарастан есте қалатын бейне.</span></p>
+        <span class="svc-arrow"><span data-lang="en">Explore</span><span data-lang="ru">Подробнее</span><span data-lang="kz">Толығырақ</span><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div></div>
+
+      <div class="svc-card"><div class="svc-card-inner">
+        <div class="svc-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" stroke-linecap="round"/></svg></div>
+        <h3 class="svc-title"><span data-lang="en">SEO & Growth</span><span data-lang="ru">SEO и продвижение</span><span data-lang="kz">SEO және жылжыту</span></h3>
+        <p class="svc-desc"><span data-lang="en">Technical optimization, content strategy, analytics. Sustainable organic growth.</span><span data-lang="ru">Техническая оптимизация, контентная стратегия и аналитика. Растём в поиске органически.</span><span data-lang="kz">Техникалық оңтайландыру, контент стратегиясы. Органикалық өсім.</span></p>
+        <span class="svc-arrow"><span data-lang="en">Explore</span><span data-lang="ru">Подробнее</span><span data-lang="kz">Толығырақ</span><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div></div>
+
+      <div class="svc-card"><div class="svc-card-inner">
+        <div class="svc-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3 class="svc-title"><span data-lang="en">AI Integrations</span><span data-lang="ru">AI-интеграции</span><span data-lang="kz">AI интеграциялары</span></h3>
+        <p class="svc-desc"><span data-lang="en">LLMs and neural networks in your products: chatbots, automation, content generation.</span><span data-lang="ru">Встраиваем нейросети и LLM в ваши продукты: чат-боты, автоматизация, генерация контента.</span><span data-lang="kz">Өніміңізге нейрожелілер мен LLM: чат-боттар, автоматтандыру, контент генерациясы.</span></p>
+        <span class="svc-arrow"><span data-lang="en">Explore</span><span data-lang="ru">Подробнее</span><span data-lang="kz">Толығырақ</span><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW WE WORK -->
+<section class="process-section" id="process-section">
+  <div class="process-inner">
+    <div class="feat-header">
+      <div class="feat-header-left">
+        <span class="feat-eyebrow">
+          <span data-lang="en">Our Process</span>
+          <span data-lang="ru">Процесс работы</span>
+          <span data-lang="kz">Жұмыс процесі</span>
+        </span>
+        <h2 class="feat-title">
+          <span data-lang="en">How We <em>Work</em></span>
+          <span data-lang="ru">Как мы <em>работаем</em></span>
+          <span data-lang="kz">Біз қалай <em>жұмыс</em> істейміз</span>
+        </h2>
+      </div>
+      <p class="feat-sub">
+        <span data-lang="en">Transparent process from first call to launch. No surprises.</span>
+        <span data-lang="ru">Прозрачный процесс от первого звонка до запуска. Без сюрпризов.</span>
+        <span data-lang="kz">Бірінші қоңыраудан іске қосуға дейін — ашық процесс.</span>
+      </p>
+    </div>
+
+    <div class="acc-list" id="accList">
+      <!-- Step 01 -->
+      <div class="acc-item" data-idx="0">
+        <button class="acc-trigger" onclick="toggleAcc(0)">
+          <div class="acc-dot">01</div>
+          <div class="acc-title-col">
+            <span class="acc-step-label"><span data-lang="en">01 — Discovery</span><span data-lang="ru">01 — Брифинг</span><span data-lang="kz">01 — Брифинг</span></span>
+            <span class="acc-name"><span data-lang="en">Discovery & Brief</span><span data-lang="ru">Знакомство и брифинг</span><span data-lang="kz">Танысу және брифинг</span></span>
+          </div>
+          <span class="acc-dur"><span data-lang="en">1–2 days</span><span data-lang="ru">1–2 дня</span><span data-lang="kz">1–2 күн</span></span>
+          <div class="acc-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </button>
+        <div class="acc-panel"><div class="acc-overflow"><div class="acc-body">
+          <div class="acc-body-text">
+            <p class="acc-desc"><span data-lang="en">We discuss your challenge, goals, and expectations. We ask the right questions — no filler.</span><span data-lang="ru">Обсуждаем вашу задачу, цели и ожидания. Задаём нужные вопросы — без воды.</span><span data-lang="kz">Сіздің міндеттеріңізді, мақсаттарыңызды талқылаймыз. Дұрыс сұрақтар — артық сөзсіз.</span></p>
+            <div class="acc-checks">
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Kick-off call</span><span data-lang="ru">Созвон с командой</span><span data-lang="kz">Бастапқы қоңырау</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Goals & KPI definition</span><span data-lang="ru">Изучение целей и KPI</span><span data-lang="kz">Мақсаттар мен KPI анықтау</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Budget & timeline</span><span data-lang="ru">Бюджет и сроки</span><span data-lang="kz">Бюджет және мерзім</span></div>
+            </div>
+          </div>
+          <div class="acc-body-img"><div class="img-main"><img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=900&q=80&auto=format&fit=crop" alt="" loading="lazy"></div></div>
+        </div></div></div>
+      </div>
+
+      <!-- Step 02 -->
+      <div class="acc-item" data-idx="1">
+        <button class="acc-trigger" onclick="toggleAcc(1)">
+          <div class="acc-dot">02</div>
+          <div class="acc-title-col">
+            <span class="acc-step-label"><span data-lang="en">02 — Strategy</span><span data-lang="ru">02 — Стратегия</span><span data-lang="kz">02 — Стратегия</span></span>
+            <span class="acc-name"><span data-lang="en">Analysis & Strategy</span><span data-lang="ru">Анализ и стратегия</span><span data-lang="kz">Талдау және стратегия</span></span>
+          </div>
+          <span class="acc-dur"><span data-lang="en">3–5 days</span><span data-lang="ru">3–5 дней</span><span data-lang="kz">3–5 күн</span></span>
+          <div class="acc-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </button>
+        <div class="acc-panel"><div class="acc-overflow"><div class="acc-body">
+          <div class="acc-body-text">
+            <p class="acc-desc"><span data-lang="en">We study the market, competitors, and your audience. Form a clear spec with transparent timelines.</span><span data-lang="ru">Изучаем рынок, конкурентов и аудиторию. Формируем чёткое ТЗ с прозрачными сроками.</span><span data-lang="kz">Нарықты, бәсекелестерді зерттейміз. Нақты ТЗ мен жол картасын жасаймыз.</span></p>
+            <div class="acc-checks">
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Competitor analysis</span><span data-lang="ru">Анализ конкурентов</span><span data-lang="kz">Бәсекелестерді талдау</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Spec & Roadmap</span><span data-lang="ru">ТЗ и Roadmap</span><span data-lang="kz">ТЗ және Roadmap</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Client sign-off</span><span data-lang="ru">Согласование</span><span data-lang="kz">Мақұлдау</span></div>
+            </div>
+          </div>
+          <div class="acc-body-img"><div class="img-main"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=900&q=80&auto=format&fit=crop" alt="" loading="lazy"></div></div>
+        </div></div></div>
+      </div>
+
+      <!-- Step 03 -->
+      <div class="acc-item" data-idx="2">
+        <button class="acc-trigger" onclick="toggleAcc(2)">
+          <div class="acc-dot">03</div>
+          <div class="acc-title-col">
+            <span class="acc-step-label"><span data-lang="en">03 — Design</span><span data-lang="ru">03 — Дизайн</span><span data-lang="kz">03 — Дизайн</span></span>
+            <span class="acc-name"><span data-lang="en">Design & Prototype</span><span data-lang="ru">Дизайн и прототип</span><span data-lang="kz">Дизайн және прототип</span></span>
+          </div>
+          <span class="acc-dur"><span data-lang="en">5–10 days</span><span data-lang="ru">5–10 дней</span><span data-lang="kz">5–10 күн</span></span>
+          <div class="acc-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </button>
+        <div class="acc-panel"><div class="acc-overflow"><div class="acc-body">
+          <div class="acc-body-text">
+            <p class="acc-desc"><span data-lang="en">Interfaces that solve business problems. Prototypes, user flows, visual language — reviewed together.</span><span data-lang="ru">Проектируем интерфейс, который решает задачи бизнеса. Прототипы и визуальный язык — согласовываем каждый шаг.</span><span data-lang="kz">Бизнес мәселелерін шешетін интерфейстер жасаймыз. Прототиптер мен визуалды тіл бірге бекітіледі.</span></p>
+            <div class="acc-checks">
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Wireframes & UX flows</span><span data-lang="ru">Wireframes и UX-схемы</span><span data-lang="kz">Wireframes және UX схемалар</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">On-brand UI design</span><span data-lang="ru">UI-дизайн в фирменном стиле</span><span data-lang="kz">Брендтік UI дизайн</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Interactive prototype</span><span data-lang="ru">Интерактивный прототип</span><span data-lang="kz">Интерактивті прототип</span></div>
+            </div>
+          </div>
+          <div class="acc-body-img"><div class="img-main"><img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=900&q=80&auto=format&fit=crop" alt="" loading="lazy"></div></div>
+        </div></div></div>
+      </div>
+
+      <!-- Step 04 -->
+      <div class="acc-item" data-idx="3">
+        <button class="acc-trigger" onclick="toggleAcc(3)">
+          <div class="acc-dot">04</div>
+          <div class="acc-title-col">
+            <span class="acc-step-label"><span data-lang="en">04 — Development</span><span data-lang="ru">04 — Разработка</span><span data-lang="kz">04 — Әзірлеу</span></span>
+            <span class="acc-name"><span data-lang="en">Development & QA</span><span data-lang="ru">Разработка и тестирование</span><span data-lang="kz">Әзірлеу және тестілеу</span></span>
+          </div>
+          <span class="acc-dur"><span data-lang="en">10–20 days</span><span data-lang="ru">10–20 дней</span><span data-lang="kz">10–20 күн</span></span>
+          <div class="acc-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </button>
+        <div class="acc-panel"><div class="acc-overflow"><div class="acc-body">
+          <div class="acc-body-text">
+            <p class="acc-desc"><span data-lang="en">Fast, scalable solutions. Modern stack, clean architecture. Rigorous QA across all devices.</span><span data-lang="ru">Разрабатываем быстрые, масштабируемые решения. Современный стек, понятная архитектура. Строгое QA на всех устройствах.</span><span data-lang="kz">Жылдам, икемді шешімдер. Заманауи стек, таза архитектура. Барлық құрылғыларда қатаң QA.</span></p>
+            <div class="acc-checks">
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Frontend & backend</span><span data-lang="ru">Вёрстка и программирование</span><span data-lang="kz">Frontend және backend</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">QA testing</span><span data-lang="ru">QA-тестирование</span><span data-lang="kz">QA тестілеу</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Performance optimization</span><span data-lang="ru">Оптимизация скорости</span><span data-lang="kz">Жылдамдықты оңтайландыру</span></div>
+            </div>
+          </div>
+          <div class="acc-body-img"><div class="img-main"><img src="https://images.unsplash.com/photo-1537432376769-00f5c2f4c8d2?w=900&q=80&auto=format&fit=crop" alt="" loading="lazy"></div></div>
+        </div></div></div>
+      </div>
+
+      <!-- Step 05 -->
+      <div class="acc-item" data-idx="4">
+        <button class="acc-trigger" onclick="toggleAcc(4)">
+          <div class="acc-dot">05</div>
+          <div class="acc-title-col">
+            <span class="acc-step-label"><span data-lang="en">05 — Launch</span><span data-lang="ru">05 — Запуск</span><span data-lang="kz">05 — Іске қосу</span></span>
+            <span class="acc-name"><span data-lang="en">Launch & Support</span><span data-lang="ru">Запуск и поддержка</span><span data-lang="kz">Іске қосу және қолдау</span></span>
+          </div>
+          <span class="acc-dur">∞</span>
+          <div class="acc-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </button>
+        <div class="acc-panel"><div class="acc-overflow"><div class="acc-body">
+          <div class="acc-body-text">
+            <p class="acc-desc"><span data-lang="en">Deploy, monitor, analyse. We support you after launch and help scale the product.</span><span data-lang="ru">Деплой, мониторинг, аналитика. Сопровождаем после запуска и помогаем масштабировать продукт.</span><span data-lang="kz">Деплой, мониторинг, аналитика. Іске қосқаннан кейін қолдаймыз және өнімді кеңейтуге көмектесеміз.</span></p>
+            <div class="acc-checks">
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Deploy & configuration</span><span data-lang="ru">Деплой и настройка</span><span data-lang="kz">Деплой және баптау</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Team onboarding</span><span data-lang="ru">Обучение команды</span><span data-lang="kz">Команданы оқыту</span></div>
+              <div class="acc-check"><div class="check-icon"><svg viewBox="0 0 10 10"><path d="M1.5 5.3L3.9 7.6L8.5 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span data-lang="en">Ongoing support & growth</span><span data-lang="ru">Техподдержка и развитие</span><span data-lang="kz">Техникалық қолдау және даму</span></div>
+            </div>
+          </div>
+          <div class="acc-body-img"><div class="img-main"><img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&q=80&auto=format&fit=crop" alt="" loading="lazy"></div></div>
+        </div></div></div>
+      </div>
+    </div>
+
+    <div class="pips-row">
+      <div class="pips" id="pips"></div>
+      <button class="hint" id="hintBtn">
+        <span data-lang="en">Next step</span>
+        <span data-lang="ru">Следующий шаг</span>
+        <span data-lang="kz">Келесі қадам</span>
+        <div class="hint-arrow">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="#c8f53c" stroke-opacity=".5" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- CASES -->
+<section class="cases-section" id="cases">
+  <div class="cases-inner">
+    <div class="cases-header">
+      <div class="cases-header-left">
+        <span class="feat-eyebrow"><span data-lang="en">Portfolio</span><span data-lang="ru">Портфолио</span><span data-lang="kz">Портфолио</span></span>
+        <h2 class="feat-title">
+          <span data-lang="en">Our <em>Case Studies</em></span>
+          <span data-lang="ru">Наши <em>кейсы</em></span>
+          <span data-lang="kz">Біздің <em>кейстер</em></span>
+        </h2>
+      </div>
+      <p class="feat-sub">
+        <span data-lang="en">Projects we're proud of.</span>
+        <span data-lang="ru">Проекты, которыми мы гордимся.</span>
+        <span data-lang="kz">Мақтан тұтатын жобаларымыз.</span>
+      </p>
+    </div>
+
+    <div class="cases-hero">
+      <div class="cases-hero-text">
+        <h3 class="cases-hero-title">
+          <span data-lang="en">We accelerate digital<br><em>products</em> on every device</span>
+          <span data-lang="ru">Ускоряем цифровой<br><em>продукт</em> на любом устройстве</span>
+          <span data-lang="kz">Кез келген құрылғыда<br>цифрлық <em>өнімді</em> жылдамдатамыз</span>
+        </h3>
+        <p class="cases-hero-sub">
+          <span data-lang="en">High-performance apps — from web platforms to AI integrations. No noise, just results.</span>
+          <span data-lang="ru">Создаём высокопроизводительные приложения — от веб-платформ до AI-интеграций. Без лишнего шума, только результат.</span>
+          <span data-lang="kz">Жоғары өнімді қосымшалар — веб платформалардан AI интеграцияларға дейін. Тек нәтиже.</span>
+        </p>
+        <a href="#contact" class="cases-hero-btn">
+          <svg class="chb-arr-l" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span class="chb-circle"></span>
+          <span class="chb-text">
+            <span data-lang="en">Discuss a Project</span>
+            <span data-lang="ru">Обсудить проект</span>
+            <span data-lang="kz">Жобаны талқылау</span>
+          </span>
+          <svg class="chb-arr-r" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="img-strip" id="imgStrip">
+        <div class="img-panel" data-idx="0">
+          <img src="https://image2url.com/r2/default/images/1772685808714-5be4c074-a613-4df1-9f50-cd12a7df8722.jpg" alt="fenixinternational.kz" loading="lazy">
+          <div class="img-panel-overlay"></div>
+          <span class="img-panel-num">01</span>
+          <span class="img-panel-label">fenixinternational.kz</span>
+        </div>
+        <div class="img-panel" data-idx="1">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbd673aqsmv1A52xi-vt4hoZ0InJoRMxEWsg&s" alt="UstazOn" loading="lazy">
+          <div class="img-panel-overlay"></div>
+          <span class="img-panel-num">02</span>
+          <span class="img-panel-label">UstazOn</span>
+        </div>
+        <div class="img-panel img-active" data-idx="2">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSChfzb0g0C3p68RFGfAHgOLzfhILEyTHHjUg&s" alt="python-django.kz" loading="lazy">
+          <div class="img-panel-overlay"></div>
+          <span class="img-panel-num">03</span>
+          <span class="img-panel-label">python-django.kz</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section" id="about-us">
+  <div class="about-inner">
+    <div class="about-header reveal-on-scroll">
+      <div class="about-header-left">
+        <span class="feat-eyebrow"><span data-lang="en">Team</span><span data-lang="ru">Команда</span><span data-lang="kz">Команда</span></span>
+        <h2 class="feat-title">
+          <span data-lang="en">About <em>Us</em></span>
+          <span data-lang="ru">О <em>нас</em></span>
+          <span data-lang="kz">Біз <em>туралы</em></span>
+        </h2>
+      </div>
+      <p class="feat-sub">
+        <span data-lang="en">Small team, big results. We work with honesty.</span>
+        <span data-lang="ru">Небольшая команда — большие результаты. Работаем честно.</span>
+        <span data-lang="kz">Кішкентай команда — үлкен нәтижелер. Адалдықпен жұмыс.</span>
+      </p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-left">
+        <div class="about-manifesto reveal-on-scroll" style="transition-delay:.05s">
+          <p class="about-manifesto-quote">
+            <span data-lang="en">We don't just build<br>"websites".<br>We build <em>tools</em><br>that work.</span>
+            <span data-lang="ru">Мы не делаем<br>«просто сайты».<br>Мы строим <em>инструменты</em>,<br>которые работают.</span>
+            <span data-lang="kz">Біз жай ғана<br>«сайт» жасамаймыз.<br>Біз жұмыс істейтін<br><em>құралдар</em> жасаймыз.</span>
+          </p>
+          <p class="about-manifesto-body">
+            <span data-lang="en">AIM Studio is a team of designers and developers from Almaty. Since 2019, we've been creating digital products for businesses: from startups to large corporations. Results matter to us, not process for its own sake.</span>
+            <span data-lang="ru">AIM Studio — команда дизайнеров и разработчиков из Алматы. С 2019 года мы создаём цифровые продукты для бизнеса: от стартапов до крупных корпораций. Нам важен результат, а не процесс ради процесса.</span>
+            <span data-lang="kz">AIM Studio — Алматыдан шыққан дизайнерлер мен әзірлеушілер командасы. 2019 жылдан бері бизнеске арналған цифрлық өнімдер жасаймыз: стартаптардан ірі корпорацияларға дейін.</span>
+          </p>
+        </div>
+
+        <div class="about-stats reveal-on-scroll" style="transition-delay:.1s">
+          <div class="about-stat">
+            <div class="about-stat-num">47<em>+</em></div>
+            <div class="about-stat-label"><span data-lang="en">Projects launched</span><span data-lang="ru">Проектов запущено</span><span data-lang="kz">Іске қосылған жобалар</span></div>
+          </div>
+          <div class="about-stat">
+            <div class="about-stat-num">5<em><span data-lang="en">yr</span><span data-lang="ru">лет</span><span data-lang="kz">жыл</span></em></div>
+            <div class="about-stat-label"><span data-lang="en">On market since 2019</span><span data-lang="ru">На рынке с 2019</span><span data-lang="kz">2019 жылдан бері</span></div>
+          </div>
+          <div class="about-stat">
+            <div class="about-stat-num">98<em>%</em></div>
+            <div class="about-stat-label"><span data-lang="en">Clients return</span><span data-lang="ru">Клиентов возвращаются</span><span data-lang="kz">Клиенттер қайта келеді</span></div>
+          </div>
+        </div>
+
+        <div class="about-values reveal-on-scroll" style="transition-delay:.15s">
+          <div class="about-value">
+            <span class="about-value-num">01</span>
+            <div>
+              <div class="about-value-title"><span data-lang="en">Honesty above all</span><span data-lang="ru">Честность прежде всего</span><span data-lang="kz">Адалдық ең алдымен</span></div>
+              <div class="about-value-desc"><span data-lang="en">We say what we think — even if it's uncomfortable. No bullshit, no inflated promises.</span><span data-lang="ru">Говорим что думаем — даже если это неудобно. Никакого буллшита и завышенных обещаний.</span><span data-lang="kz">Ойлағанымызды айтамыз — ыңғайсыз болса да. Жалған уәде жоқ.</span></div>
+            </div>
+          </div>
+          <div class="about-value">
+            <span class="about-value-num">02</span>
+            <div>
+              <div class="about-value-title"><span data-lang="en">Details make the difference</span><span data-lang="ru">Детали решают всё</span><span data-lang="kz">Бәрін бөлшектер шешеді</span></div>
+              <div class="about-value-desc"><span data-lang="en">One pixel, one animation — the gap between a good and an outstanding product.</span><span data-lang="ru">Один пиксель, одна анимация — разница между хорошим и выдающимся продуктом.</span><span data-lang="kz">Бір пиксель, бір анимация — жақсы мен керемет өнімнің айырмасы.</span></div>
+            </div>
+          </div>
+          <div class="about-value">
+            <span class="about-value-num">03</span>
+            <div>
+              <div class="about-value-title"><span data-lang="en">We think in business terms</span><span data-lang="ru">Мы думаем бизнесом</span><span data-lang="kz">Біз бизнес тілінде ойлаймыз</span></div>
+              <div class="about-value-desc"><span data-lang="en">Looking pretty isn't the goal. Looking pretty and performing — that's what we care about.</span><span data-lang="ru">Красиво — не цель. Красиво и работает — вот что нас интересует.</span><span data-lang="kz">Сұлу болу мақсат емес. Сұлу әрі жұмыс істеу — бізге керек нәрсе.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-right reveal-on-scroll" style="transition-delay:.08s">
+        <div class="about-photo-main">
+          <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&q=85&auto=format&fit=crop" alt="AIM Studio Team">
+          <div class="about-photo-main-fade"></div>
+        </div>
+        <div class="about-team-row" id="tooltipTeam">
+          <div class="tooltip-avatar-wrap">
+            <div class="tooltip-pop"><span class="tooltip-pop-name"><span data-lang="en">Aidar</span><span data-lang="ru">Айдар</span><span data-lang="kz">Айдар</span></span><span class="tooltip-pop-role">Founder / Dev</span></div>
+            <div class="tooltip-avatar"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&q=80&auto=format&fit=crop&crop=face" alt="Aidar"></div>
+          </div>
+          <div class="tooltip-avatar-wrap">
+            <div class="tooltip-pop"><span class="tooltip-pop-name"><span data-lang="en">Dana</span><span data-lang="ru">Дана</span><span data-lang="kz">Дана</span></span><span class="tooltip-pop-role">Lead Design</span></div>
+            <div class="tooltip-avatar"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&q=80&auto=format&fit=crop&crop=face" alt="Dana"></div>
+          </div>
+          <div class="tooltip-avatar-wrap">
+            <div class="tooltip-pop"><span class="tooltip-pop-name"><span data-lang="en">Timur</span><span data-lang="ru">Тимур</span><span data-lang="kz">Тимур</span></span><span class="tooltip-pop-role">Frontend</span></div>
+            <div class="tooltip-avatar"><img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=160&q=80&auto=format&fit=crop&crop=face" alt="Timur"></div>
+          </div>
+          <div class="tooltip-avatar-wrap">
+            <div class="tooltip-pop"><span class="tooltip-pop-name"><span data-lang="en">Aruzan</span><span data-lang="ru">Арузан</span><span data-lang="kz">Арузан</span></span><span class="tooltip-pop-role">PM / Strategy</span></div>
+            <div class="tooltip-avatar"><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=160&q=80&auto=format&fit=crop&crop=face" alt="Aruzan"></div>
+          </div>
+          <div class="tooltip-avatar-wrap">
+            <div class="tooltip-pop"><span class="tooltip-pop-name"><span data-lang="en">Nurlan</span><span data-lang="ru">Нурлан</span><span data-lang="kz">Нұрлан</span></span><span class="tooltip-pop-role">Backend</span></div>
+            <div class="tooltip-avatar"><img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=160&q=80&auto=format&fit=crop&crop=face" alt="Nurlan"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-inner">
+    <div class="contact-info reveal-on-scroll">
+      <span class="contact-eyebrow"><span data-lang="en">Contact</span><span data-lang="ru">Связаться</span><span data-lang="kz">Байланыс</span></span>
+      <h2 class="contact-title">
+        <span data-lang="en">Got an<br><em>idea?</em></span>
+        <span data-lang="ru">Есть<br><em>идея?</em></span>
+        <span data-lang="kz">Идея<br><em>бар ма?</em></span>
+      </h2>
+      <p class="contact-desc">
+        <span data-lang="en">Tell us about your project — we'll reply within a day. Straight to business.</span>
+        <span data-lang="ru">Расскажите о проекте — ответим в течение дня. Без лишних звонков, только по делу.</span>
+        <span data-lang="kz">Жоба туралы айтыңыз — бір күн ішінде жауап береміз. Тікелей іске кірісеміз.</span>
+      </p>
+      <div class="contact-details">
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.6 12.09 19.79 19.79 0 011.58 3.5 2 2 0 013.56 1.34h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.91 9.03a16 16 0 006.06 6.06l.91-.91a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div class="contact-detail-label"><span data-lang="en">Phone</span><span data-lang="ru">Телефон</span><span data-lang="kz">Телефон</span></div><a class="contact-detail-val" href="tel:+77001234567">+7 700 123 45 67</a></div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div class="contact-detail-label">Email</div><a class="contact-detail-val" href="mailto:hello@aim.studio">hello@aim.studio</a></div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12" stroke-linecap="round"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div class="contact-detail-label"><span data-lang="en">Website</span><span data-lang="ru">Сайт</span><span data-lang="kz">Сайт</span></div><a class="contact-detail-val" href="https://aim.studio" target="_blank">aim.studio</a></div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div class="contact-detail-label"><span data-lang="en">Address</span><span data-lang="ru">Адрес</span><span data-lang="kz">Мекенжай</span></div>
+          <span class="contact-detail-val"><span data-lang="en">Almaty, Dostyk Ave 162</span><span data-lang="ru">Алматы, пр. Достык 162</span><span data-lang="kz">Алматы, Достық даңғылы 162</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-form-card reveal-on-scroll" style="transition-delay:.08s">
+      <div class="contact-form-row">
+        <div class="contact-field" style="margin-bottom:0">
+          <label class="contact-label" for="cf-fname"><span data-lang="en">First Name</span><span data-lang="ru">Имя</span><span data-lang="kz">Аты</span></label>
+          <input class="contact-input" type="text" id="cf-fname" placeholder="—">
+        </div>
+        <div class="contact-field" style="margin-bottom:0">
+          <label class="contact-label" for="cf-lname"><span data-lang="en">Last Name</span><span data-lang="ru">Фамилия</span><span data-lang="kz">Тегі</span></label>
+          <input class="contact-input" type="text" id="cf-lname" placeholder="—">
+        </div>
+      </div>
+      <div class="contact-field">
+        <label class="contact-label" for="cf-email">Email</label>
+        <input class="contact-input" type="email" id="cf-email" placeholder="hello@company.com">
+      </div>
+      <div class="contact-field">
+        <label class="contact-label" for="cf-subject"><span data-lang="en">Subject</span><span data-lang="ru">Тема</span><span data-lang="kz">Тақырып</span></label>
+        <input class="contact-input" type="text" id="cf-subject" placeholder="—">
+      </div>
+      <div class="contact-field">
+        <label class="contact-label" for="cf-message"><span data-lang="en">Message</span><span data-lang="ru">Сообщение</span><span data-lang="kz">Хабарлама</span></label>
+        <textarea class="contact-textarea" id="cf-message" placeholder="—"></textarea>
+      </div>
+      <button class="contact-submit" id="contactSubmit">
+        <span>
+          <span data-lang="en">Send Message</span>
+          <span data-lang="ru">Отправить сообщение</span>
+          <span data-lang="kz">Хабарлама жіберу</span>
+        </span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="footer-logo" href="#">AIM Studio</a>
+      <p class="footer-tagline">
+        <span data-lang="en">We build digital products that work.</span>
+        <span data-lang="ru">Создаём цифровые продукты, которые работают.</span>
+        <span data-lang="kz">Жұмыс істейтін цифрлық өнімдер жасаймыз.</span>
+      </p>
+      <div class="location-map-wrap" style="margin-top:16px">
+        <span class="location-map-label"><span data-lang="en">Our Office</span><span data-lang="ru">Наш офис</span><span data-lang="kz">Біздің кеңсе</span></span>
+        <div class="map-card" id="mapCard">
+          <div class="map-tilt" id="mapTilt">
+            <div class="map-card-inner">
+              <div class="map-bg"></div>
+              <svg class="map-svg" id="mapSvg" viewBox="0 0 320 240" preserveAspectRatio="none">
+                <line class="map-road" x1="0" y1="84" x2="320" y2="84" stroke-width="3.5"/>
+                <line class="map-road" x1="0" y1="156" x2="320" y2="156" stroke-width="3.5"/>
+                <line class="map-road" x1="96" y1="0" x2="96" y2="240" stroke-width="3"/>
+                <line class="map-road" x1="224" y1="0" x2="224" y2="240" stroke-width="3"/>
+                <line class="map-road-sec" x1="0" y1="48" x2="320" y2="48" stroke-width="1.5"/>
+                <line class="map-road-sec" x1="0" y1="120" x2="320" y2="120" stroke-width="1.5"/>
+                <line class="map-road-sec" x1="0" y1="192" x2="320" y2="192" stroke-width="1.5"/>
+                <line class="map-road-sec" x1="48" y1="0" x2="48" y2="240" stroke-width="1.5"/>
+                <line class="map-road-sec" x1="144" y1="0" x2="144" y2="240" stroke-width="1.5"/>
+                <line class="map-road-sec" x1="176" y1="0" x2="176" y2="240" stroke-width="1.5"/>
+                <line class="map-road-sec" x1="272" y1="0" x2="272" y2="240" stroke-width="1.5"/>
+              </svg>
+              <div class="map-building" style="top:22%;left:8%;width:12%;height:16%;transition-delay:.38s"></div>
+              <div class="map-building" style="top:12%;left:33%;width:9%;height:12%;background:rgba(200,245,60,.07);border-color:rgba(200,245,60,.1);transition-delay:.44s"></div>
+              <div class="map-building" style="top:63%;left:73%;width:14%;height:18%;transition-delay:.50s"></div>
+              <div class="map-building" style="top:18%;right:7%;width:10%;height:22%;transition-delay:.56s"></div>
+              <div class="map-building" style="top:68%;left:4%;width:7%;height:14%;transition-delay:.62s"></div>
+              <div class="map-overlay-fade"></div>
+              <div class="map-pin">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#c8f53c"/><circle cx="12" cy="9" r="2.5" fill="#0a0a09"/></svg>
+              </div>
+              <div class="map-grid"></div>
+              <div class="map-content">
+                <div class="map-top">
+                  <div class="map-icon-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c8f53c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+                  </div>
+                  <div class="map-status"><div class="map-dot"></div>Live</div>
+                </div>
+                <div class="map-bottom">
+                  <div class="map-city"><span data-lang="en">Astana, Kazakhstan</span><span data-lang="ru">Астана, Казахстан</span><span data-lang="kz">Астана, Қазақстан</span></div>
+                  <div class="map-coords">51.1801° N, 71.4460° E</div>
+                  <div class="map-underline"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="map-hint"><span data-lang="en">Tap to explore</span><span data-lang="ru">Нажмите</span><span data-lang="kz">Басыңыз</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <div class="footer-col">
+        <span class="footer-col-title"><span data-lang="en">Services</span><span data-lang="ru">Услуги</span><span data-lang="kz">Қызметтер</span></span>
+        <a href="#services"><span data-lang="en">Web Development</span><span data-lang="ru">Веб-разработка</span><span data-lang="kz">Веб-әзірлеу</span></a>
+        <a href="#services"><span data-lang="en">UI/UX Design</span><span data-lang="ru">UI/UX Дизайн</span><span data-lang="kz">UI/UX Дизайн</span></a>
+        <a href="#services"><span data-lang="en">Mobile Apps</span><span data-lang="ru">Мобильные приложения</span><span data-lang="kz">Мобильді қосымшалар</span></a>
+        <a href="#services"><span data-lang="en">AI Integrations</span><span data-lang="ru">AI-интеграции</span><span data-lang="kz">AI интеграциялары</span></a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-title"><span data-lang="en">Studio</span><span data-lang="ru">Студия</span><span data-lang="kz">Студия</span></span>
+        <a href="#about-us"><span data-lang="en">About Us</span><span data-lang="ru">О нас</span><span data-lang="kz">Біз туралы</span></a>
+        <a href="#cases"><span data-lang="en">Case Studies</span><span data-lang="ru">Кейсы</span><span data-lang="kz">Кейстер</span></a>
+        <a href="#process-section"><span data-lang="en">Process</span><span data-lang="ru">Процесс</span><span data-lang="kz">Процесс</span></a>
+        <a href="#contact"><span data-lang="en">Contact</span><span data-lang="ru">Контакты</span><span data-lang="kz">Байланыс</span></a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-title"><span data-lang="en">Social</span><span data-lang="ru">Соцсети</span><span data-lang="kz">Әлеуметтік желілер</span></span>
+        <a href="https://t.me" target="_blank">Telegram</a>
+        <a href="https://instagram.com" target="_blank">Instagram</a>
+        <a href="https://behance.net" target="_blank">Behance</a>
+        <a href="https://linkedin.com" target="_blank">LinkedIn</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 AIM Studio. <em><span data-lang="en">All rights reserved.</span><span data-lang="ru">Все права защищены.</span><span data-lang="kz">Барлық құқықтар қорғалған.</span></em></span>
+    <div class="footer-socials">
+      <a href="#" class="footer-social" aria-label="Telegram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></a>
+      <a href="#" class="footer-social" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+      <a href="#" class="footer-social" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── LANGUAGE SWITCHER ─────────────────────────────────────────
+let currentLang = localStorage.getItem('aim_lang') || 'en';
+
+function applyLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('aim_lang', lang);
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-lang]').forEach(el => {
+    el.classList.toggle('lang-active', el.getAttribute('data-lang') === lang);
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-set-lang') === lang);
+  });
+}
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyLang(btn.getAttribute('data-set-lang')));
+});
+applyLang(currentLang);
+
+// ── MOBILE MENU ───────────────────────────────────────────────
+const menuBtn = document.getElementById('menuBtn');
+const mobileDrawer = document.getElementById('mobileDrawer');
+let drawerOpen = false;
+
+function openDrawer() {
+  drawerOpen = true;
+  mobileDrawer.classList.add('open');
+  menuBtn.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  drawerOpen = false;
+  mobileDrawer.classList.remove('open');
+  menuBtn.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+menuBtn.addEventListener('click', () => drawerOpen ? closeDrawer() : openDrawer());
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
+mobileDrawer.addEventListener('click', e => {
+  if(e.target === mobileDrawer) closeDrawer();
+});
+
+// ── MAP WIDGET ────────────────────────────────────────────────
+(function () {
+  const card = document.getElementById('mapCard');
+  const tilt = document.getElementById('mapTilt');
+  if (!card || !tilt) return;
+
+  function getLen(el) {
+    try { if(el.getTotalLength) return el.getTotalLength(); } catch(e) {}
+    const x1=parseFloat(el.getAttribute('x1')||0),y1=parseFloat(el.getAttribute('y1')||0);
+    const x2=parseFloat(el.getAttribute('x2')||0),y2=parseFloat(el.getAttribute('y2')||0);
+    return Math.sqrt((x2-x1)**2+(y2-y1)**2);
+  }
+
+  function initRoads() {
+    card.querySelectorAll('.map-road,.map-road-sec').forEach((el,i) => {
+      const len=getLen(el);
+      el.style.strokeDasharray=len;
+      el.style.strokeDashoffset=len;
+      const isPrimary=el.classList.contains('map-road');
+      const delay=isPrimary?(i*0.08):0.35+(i-4)*0.07;
+      el.style.transition=`stroke-dashoffset ${isPrimary?.75:.55}s ease ${Math.max(0,delay).toFixed(2)}s`;
+    });
+  }
+  initRoads();
+
+  card.addEventListener('click', () => {
+    const expanding=!card.classList.contains('expanded');
+    card.classList.toggle('expanded');
+    if(expanding){
+      card.querySelectorAll('.map-road,.map-road-sec').forEach(el=>{el.style.strokeDashoffset=0});
+    } else {
+      card.querySelectorAll('.map-road,.map-road-sec').forEach(el=>{
+        const len=getLen(el);
+        el.style.transition='none';
+        el.style.strokeDashoffset=len;
+        requestAnimationFrame(()=>requestAnimationFrame(()=>initRoads()));
+      });
+    }
+  });
+
+  if(window.matchMedia('(hover:hover)').matches){
+    card.addEventListener('mousemove',(e)=>{
+      const r=card.getBoundingClientRect();
+      const dx=((e.clientX-r.left)/r.width-.5)*2;
+      const dy=((e.clientY-r.top)/r.height-.5)*2;
+      tilt.style.transform=`perspective(900px) rotateY(${dx*5}deg) rotateX(${-dy*5}deg)`;
+    });
+    card.addEventListener('mouseleave',()=>{tilt.style.transform='perspective(900px) rotateY(0deg) rotateX(0deg)'});
+  }
+})();
+
+// ── NAV SCROLL ────────────────────────────────────────────────
+const shell = document.getElementById('navShell');
+window.addEventListener('scroll',()=>{shell.classList.toggle('scrolled',window.scrollY>60)},{passive:true});
+
+// ── CURSOR PARALLAX (desktop only) ───────────────────────────
+if(window.matchMedia('(hover:hover) and (min-width:641px)').matches){
+  const blob1=document.querySelector('.mesh-blob-1');
+  const blob2=document.querySelector('.mesh-blob-2');
+  document.addEventListener('mousemove',e=>{
+    const x=(e.clientX/window.innerWidth-.5);
+    const y=(e.clientY/window.innerHeight-.5);
+    blob1.style.transform=`translateX(calc(-50% + ${x*28}px)) translateY(${y*18}px)`;
+    blob2.style.transform=`translate(${x*-18}px,${y*12}px)`;
+  },{passive:true});
+}
+
+// ── ACCORDION ─────────────────────────────────────────────────
+let openIdx = -1;
+const accItems = document.querySelectorAll('.acc-item');
+const pipsEl = document.getElementById('pips');
+const ACC_TOTAL = 5;
+
+function buildPips() {
+  pipsEl.innerHTML='';
+  for(let i=0;i<ACC_TOTAL;i++){
+    const p=document.createElement('div');
+    p.className='pip'+(i===openIdx?' on':'');
+    pipsEl.appendChild(p);
+  }
+}
+
+function toggleAcc(idx) {
+  const wasOpen = openIdx===idx;
+  accItems.forEach(el=>el.classList.remove('open'));
+  openIdx = wasOpen ? -1 : idx;
+  if(openIdx>=0) accItems[openIdx].classList.add('open');
+  buildPips();
+}
+
+document.getElementById('hintBtn').addEventListener('click',()=>{
+  const next=(openIdx+1)%ACC_TOTAL;
+  toggleAcc(next);
+  accItems[next].scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+buildPips();
+
+// ── DYNAMIC FRAME GRID (CASES) ────────────────────────────────
+(function(){
+  const grid = document.getElementById('dflGrid');
+  if(!grid) return;
+
+  const HOVER_SIZE = 6;
+  const items = [
+    { src: "https://image2url.com/r2/default/images/1772685808714-5be4c074-a613-4df1-9f50-cd12a7df8722.jpg", label: "fenixinternational.kz" },
+    { src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbd673aqsmv1A52xi-vt4hoZ0InJoRMxEWsg&s",   label: "UstazOn" },
+    { src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSChfzb0g0C3p68RFGfAHgOLzfhILEyTHHjUg&s",  label: "python-django.kz" },
+    { src: "https://image2url.com/r2/default/images/1772685808714-5be4c074-a613-4df1-9f50-cd12a7df8722.jpg", label: "fenixinternational.kz" },
+    { src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbd673aqsmv1A52xi-vt4hoZ0InJoRMxEWsg&s",   label: "UstazOn" },
+    { src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSChfzb0g0C3p68RFGfAHgOLzfhILEyTHHjUg&s",  label: "python-django.kz" },
+    { src: "https://image2url.com/r2/default/images/1772685808714-5be4c074-a613-4df1-9f50-cd12a7df8722.jpg", label: "fenixinternational.kz" },
+    { src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbd673aqsmv1A52xi-vt4hoZ0InJoRMxEWsg&s",   label: "UstazOn" },
+    { src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSChfzb0g0C3p68RFGfAHgOLzfhILEyTHHjUg&s",  label: "python-django.kz" },
+  ];
+
+  // Build cells
+  items.forEach((item, i) => {
+    const row = Math.floor(i / 3);
+    const col = i % 3;
+    const cell = document.createElement('div');
+    cell.className = 'dfl-cell';
+    cell.dataset.row = row;
+    cell.dataset.col = col;
+    cell.innerHTML = `
+      <img src="${item.src}" alt="${item.label}" loading="lazy">
+      <div class="dfl-cell-overlay"></div>
+      <span class="dfl-cell-num">0${i+1}</span>
+      <span class="dfl-cell-label">${item.label}</span>
+    `;
+    grid.appendChild(cell);
+  });
+
+  const cells = grid.querySelectorAll('.dfl-cell');
+
+  function updateGrid(hovRow, hovCol) {
+    const nonH = (12 - HOVER_SIZE) / 2;
+    if(hovRow === null) {
+      grid.style.gridTemplateRows    = '4fr 4fr 4fr';
+      grid.style.gridTemplateColumns = '4fr 4fr 4fr';
+    } else {
+      grid.style.gridTemplateRows    = [0,1,2].map(r => r===hovRow ? `${HOVER_SIZE}fr` : `${nonH}fr`).join(' ');
+      grid.style.gridTemplateColumns = [0,1,2].map(c => c===hovCol ? `${HOVER_SIZE}fr` : `${nonH}fr`).join(' ');
+    }
+  }
+
+  cells.forEach(cell => {
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+
+    cell.addEventListener('mouseenter', () => updateGrid(row, col));
+    cell.addEventListener('mouseleave', () => updateGrid(null, null));
+    cell.addEventListener('touchstart', () => updateGrid(row, col), {passive:true});
+  });
+})();
+
+// ── SERVICE CARDS SHINE ───────────────────────────────────────
+if(window.matchMedia('(hover:hover)').matches){
+  document.querySelectorAll('.svc-card').forEach(card=>{
+    card.addEventListener('mousemove',e=>{
+      const r=card.getBoundingClientRect();
+      card.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');
+      card.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');
+    });
+  });
+}
+
+// ── SCROLL CARD ───────────────────────────────────────────────
+const scrollCard = document.getElementById('scrollCard');
+const scrollSection = document.getElementById('scrollSection');
+
+function easeOutCubic(t){return 1-Math.pow(1-t,3)}
+
+function updateScrollCard(){
+  if(!scrollCard || !scrollSection) return;
+  const rect      = scrollSection.getBoundingClientRect();
+  const sectionH  = scrollSection.offsetHeight;
+  const scrollable = sectionH - window.innerHeight;
+  const raw = Math.min(1, Math.max(0, -rect.top / Math.max(scrollable, 1)));
+  const t   = easeOutCubic(raw);
+  const isMob = window.innerWidth <= 640;
+  const rotateStart = isMob ? 14 : 22;
+  const scaleStart  = isMob ? 0.88 : 1.06;
+  const scaleEnd    = isMob ? 0.96 : 1.00;
+  const yShift      = -60 * t;
+  const rotateX = rotateStart * (1 - t);
+  const scale   = scaleStart + (scaleEnd - scaleStart) * t;
+  scrollCard.style.transform =
+    `rotateX(${rotateX.toFixed(3)}deg) scale(${scale.toFixed(4)}) translateY(${yShift.toFixed(2)}px)`;
+}
+
+window.addEventListener('scroll', updateScrollCard, {passive:true});
+window.addEventListener('resize', updateScrollCard, {passive:true});
+updateScrollCard();
+window.addEventListener('load', updateScrollCard);
+
+// ── IMAGE STRIP (CASES) ───────────────────────────────────────
+(function(){
+  const panels = document.querySelectorAll('#imgStrip .img-panel');
+  if(!panels.length) return;
+  const isMobile = () => window.innerWidth <= 640;
+  panels.forEach(panel=>{
+    panel.addEventListener('mouseenter',()=>{
+      if(isMobile()) return;
+      panels.forEach(p=>p.classList.remove('img-active'));
+      panel.classList.add('img-active');
+    });
+  });
+})();
+
+// ── FB WRAP ───────────────────────────────────────────────────
+document.querySelectorAll('.fb-wrap').forEach(wrap=>{
+  const btn=wrap.querySelector('.flow-btn');
+  if(!btn) return;
+  btn.addEventListener('mouseenter',()=>wrap.classList.add('hovered'));
+  btn.addEventListener('mouseleave',()=>wrap.classList.remove('hovered'));
+});
+
+// ── TOOLTIP SPRING (desktop only) ────────────────────────────
+if(window.matchMedia('(hover:hover)').matches){
+  document.querySelectorAll('.tooltip-avatar-wrap').forEach(wrap=>{
+    const pop=wrap.querySelector('.tooltip-pop');
+    const img=wrap.querySelector('.tooltip-avatar');
+    if(!pop||!img) return;
+    let active=false,tRot=0,tTx=0,cRot=0,cTx=0,raf=null;
+    function tick(){
+      cRot+=(tRot-cRot)*.16; cTx+=(tTx-cTx)*.16;
+      if(active) pop.style.transform=`translateX(calc(-50% + ${cTx.toFixed(2)}px)) translateY(0) scale(1) rotate(${cRot.toFixed(2)}deg)`;
+      if(Math.abs(tRot-cRot)>.05||Math.abs(tTx-cTx)>.05) raf=requestAnimationFrame(tick); else raf=null;
+    }
+    wrap.addEventListener('mouseenter',()=>{active=true;cRot=0;cTx=0});
+    wrap.addEventListener('mousemove',e=>{
+      if(!active) return;
+      const r=img.getBoundingClientRect(),h=r.width/2,ox=e.clientX-r.left-h;
+      tRot=(ox/h)*18; tTx=(ox/h)*28;
+      if(!raf) raf=requestAnimationFrame(tick);
+    });
+    wrap.addEventListener('mouseleave',()=>{active=false;tRot=0;tTx=0;pop.style.transform='';});
+  });
+}
+
+// ── CONTACT SUBMIT ────────────────────────────────────────────
+const submitBtn = document.getElementById('contactSubmit');
+if(submitBtn){
+  submitBtn.addEventListener('click',()=>{
+    const feedbackMap={en:'✓ Message sent',ru:'✓ Сообщение отправлено',kz:'✓ Хабарлама жіберілді'};
+    const orig=submitBtn.innerHTML;
+    submitBtn.textContent=feedbackMap[currentLang]||feedbackMap.en;
+    submitBtn.disabled=true;
+    submitBtn.style.background='#8ab528';
+    setTimeout(()=>{
+      submitBtn.innerHTML=orig;
+      submitBtn.disabled=false;
+      submitBtn.style.background='';
+      applyLang(currentLang);
+    },3000);
+  });
+}
+
+// ── SCROLL REVEAL ─────────────────────────────────────────────
+const revealObs=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.classList.add('visible');
+      revealObs.unobserve(entry.target);
+    }
+  });
+},{threshold:0.12,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal-on-scroll').forEach(el=>revealObs.observe(el));
+</script>
+</body>
+</html>
